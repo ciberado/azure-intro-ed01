@@ -245,6 +245,27 @@ az role assignment create \
   --assignee $USER_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
 
+Wait a few seconds, as the role assignment requires broad propagation. Now try it again.
+
+
+```bash
+az storage blob upload \
+  --account-name ${USER}repositorysa \
+  --container-name appversions \
+  --name app.zip \
+  --file /tmp/app.zip \
+  --auth-mode login
+```
+
+
+```bash
+az storage blob list \
+  --account-name ${USER}repositorysa \
+  --container-name appversions \
+  --output table \
+  --auth-mode login
+
+```
 
 ## Networking
 
