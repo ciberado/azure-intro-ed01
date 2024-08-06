@@ -86,11 +86,18 @@ chmod +x ./run-api-tests.sh
 APIURL=http://localhost:5000/ ./run-api-tests.sh
 ```
 
+#### Packaging
+
+To make it simple, we will start by zipping the whole application:
+
+```bash
+sudo apt install zip -y
+zip -r /tmp/app.zip .
+```
+
 ## Azure
 
 ![Blueprint of a neightborhood, by Dall-E](images/blueprint-of-a-neightborhood.jpg)
-
-A split image with the left part depicting the blueprint of a simple starship and the right part the photorealistic realization of it. 
 
 ### The [Azure Portal](https://portal.azure.com)
 
@@ -188,6 +195,57 @@ az group create \
   --location westeurope
 ```
 
+## Storage
+
+![A blueprint of a library](images/blueprint-of-a-library.jpg)
+
+### Storage accounts
+
+An Azure Storage Account is a fundamental component of Microsoft's cloud storage solution, providing a platform for storing various types of data. It acts as a container that groups together different Azure storage services, such as **Blob Storage** for unstructured data, **File Storage** for managed file shares, **Queue Storage** for message storage, and **Table Storage** for structured data.
+
+Each storage account has a unique namespace accessible globally via HTTP or **HTTPS**, ensuring that data is highly available and protected through redundancy options.
+
+```bash
+az storage account create \
+  --name ${USER}repositorysa \
+  --resource-group $USER-rg \
+  --sku Standard_LRS \
+  --encryption-services blob
+```
+
+### Blob storage
+
+```bash
+az storage container create \
+  --account-name ${USER}repositorysa \
+  --name appversions \
+  --auth-mode login
+```
+
+### Transferring files
+
+```bash
+az storage blob upload \
+  --account-name ${USER}repositorysa \
+  --container-name appversions \
+  --name app.zip \
+  --file /tmp/app.zip \
+  --auth-mode login
+
+```
+
+SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
+echo $SUBSCRIPTION_ID
+
+USER_ID=$(az ad signed-in-user show --query id -o tsv)
+echo $USER_ID
+
+az role assignment create \
+  --role "Storage Blob Data Contributor" \
+  --assignee $USER_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
+
+
 ## Networking
 
 ![Blueprint of multiple pipes and tubes, by Dall-E](images/blueprint-of-pumps-and-tubes.jpg)
@@ -250,14 +308,14 @@ az network nsg create \
 az network nsg rule create \
   --resource-group $USER-rg \
   --nsg-name $USER-web-nsg \
-  --name AllowPort5000 \
+  --name AllowWebPorts \
   --protocol tcp \
   --direction inbound \
-  --priority 1000 \
+  --priority 500 \
   --source-address-prefix '*' \
   --source-port-range '*' \
   --destination-address-prefix '*' \
-  --destination-port-range 5000 \
+  --destination-port-range 80 8080 443 \
   --access allow
 ```
 
@@ -270,8 +328,20 @@ az network vnet subnet update \
 ```
 
 
-## Storage
+
 
 ## Managed computation
 
 ## Databases
+
+
+
+
+
+
+
+
+
+
+
+A split image with the left part depicting the blueprint of a simple starship and the right part the photorealistic realization of it. 
