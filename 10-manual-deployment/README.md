@@ -215,6 +215,8 @@ az storage account create \
 
 ### Blob storage
 
+Azure Blob Storage is an **object storage** service designed for storing large amounts of unstructured data, such as text and binary files. It supports three types of **blobs—block** blobs for documents and media, **append blobs** for logging, and **page blobs** for virtual machine disks.
+
 ```bash
 az storage container create \
   --account-name ${USER}repositorysa \
@@ -224,6 +226,11 @@ az storage container create \
 
 ### Transferring files
 
+We will upload the zip artifact to the recentely created blob container.
+**Explicit permission must be granted** to manipulate the container, even if
+it has been created by the same user. That is why uploading a file to it
+**will fail**:
+
 ```bash
 az storage blob upload \
   --account-name ${USER}repositorysa \
@@ -231,9 +238,12 @@ az storage blob upload \
   --name app.zip \
   --file /tmp/app.zip \
   --auth-mode login
-
 ```
 
+Before trying it again, a role with proper permissions must be assigned
+to the current Azure user to provide access to the specific blob container.
+
+```bash
 SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo $SUBSCRIPTION_ID
 
@@ -244,9 +254,10 @@ az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $USER_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
+```
 
-Wait a few seconds, as the role assignment requires broad propagation. Now try it again.
-
+**Wait a few seconds**, as the role assignment requires broad propagation. Now try to
+upload the file again.
 
 ```bash
 az storage blob upload \
@@ -257,6 +268,7 @@ az storage blob upload \
   --auth-mode login
 ```
 
+Use the `list` command to ensure that the file has been correctly put in the blob container.
 
 ```bash
 az storage blob list \
@@ -264,8 +276,81 @@ az storage blob list \
   --container-name appversions \
   --output table \
   --auth-mode login
-
 ```
+
+## Databases
+
+
+Standard_B1ms
+
+SQL_PASS=MyP@ssword$RANDOM
+echo $SQL_PASS > sql_pass.txt
+
+az postgres flexible-server create \
+  --name $USER-app-db \
+  --resource-group $USER-rg \
+  --admin-user dbadmin \
+  --admin-password $SQL_PASS \
+  --tier Burstable \
+  --sku-name Standard_B1ms \
+  --output table
+
+
+az sql db create \
+  --resource-group $DB_PREFIX-rg \
+  --server $DB_PREFIX-pokemondb-server \
+  --name $PREFIX-pokemonDB \
+  --auto-pause-delay 600 \
+  --edition GeneralPurpose \
+  --family Gen5 \
+  --capacity 1 \
+  --compute-model Serverless \
+  --zone-redundant false \
+  --tags Owner=$DB_PREFIX Project=pokemon \
+  --output table
+
+## Security and Identity
+
+![A blueprint of a vault](images/blueprint-of-a-vault.jpg)
+
+
+### Azure Vault
+
+az provider register --name Microsoft.KeyVault
+az keyvault create \
+  --resource-group $USER-rg \
+  --name $USER-app-vault \
+  --enable-rbac-authorization
+
+SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
+echo $SUBSCRIPTION_ID
+
+USER_ID=$(az ad signed-in-user show --query id -o tsv)
+echo $USER_ID
+
+https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations
+
+az role assignment create \
+  --role "Key Vault Administrator" \
+  --assignee $USER_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.KeyVault/vaults/$USER-app-vault"
+
+az keyvault secret set \
+  --vault-name $USER-app-vault \
+  --name "MySecret" \
+  --value "MySecretValue" 
+
+az keyvault secret show \
+  --vault-name "$USER-app-vault" \
+  --name "MySecret"
+
+## App Services
+
+Platform as a Service (PaaS) is a cloud computing service model that provides a complete environment for developers to build, run, and manage applications without the complexities of managing the underlying infrastructure, reducing the burden of operating it.
+
+Azure App Service is a PaaS offering from Microsoft for hosting web applications, REST APIs, and mobile back ends. It supports **multiple programming** operating systems, languages and frameworks. App Service provides a range of features such as automatic **scaling**, continuous **deployment**, security, and integration with other Azure services like authentication.
+
+
 
 ## Networking
 
