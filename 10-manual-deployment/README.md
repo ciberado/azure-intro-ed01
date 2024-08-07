@@ -287,27 +287,37 @@ SQL_PASS=MyP@ssword$RANDOM
 echo $SQL_PASS > sql_pass.txt
 
 az postgres flexible-server create \
-  --name $USER-app-db \
   --resource-group $USER-rg \
+  --name $USER-app-db \
+  --database-name conduit \
   --admin-user dbadmin \
   --admin-password $SQL_PASS \
   --tier Burstable \
-  --sku-name Standard_B1ms \
+  --sku-name Standard_B1ms 
+
+MY_IP=$(curl ifconfig.me)
+
+az postgres flexible-server firewall-rule create \
+  --resource-group $USER-rg \
+  --name $USER-app-db \
+  --start-ip-address $MY_IP \
+  --end-ip-address $MY_IP \
   --output table
 
+az postgres flexible-server list --output table
 
-az sql db create \
-  --resource-group $DB_PREFIX-rg \
-  --server $DB_PREFIX-pokemondb-server \
-  --name $PREFIX-pokemonDB \
-  --auto-pause-delay 600 \
-  --edition GeneralPurpose \
-  --family Gen5 \
-  --capacity 1 \
-  --compute-model Serverless \
-  --zone-redundant false \
-  --tags Owner=$DB_PREFIX Project=pokemon \
-  --output table
+CONN=$(az postgres flexible-server show-connection-string \
+  --server-name $USER-app-db \
+  --database-name conduit \
+  --admin-user dbadmin \
+  --admin-password $SQL_PASS \
+  --query connectionStrings.psql_cmd \
+  --output tsv)
+
+
+sudo apt install postgresql-client-common -y
+sudo apt-get install postgresql-client
+psql "--host=javi-app-db.postgres.database.azure.com" "--port=5432" "--dbname=conduit" "--username=dbadmin" "--set=sslmode=require"
 
 ## Security and Identity
 
