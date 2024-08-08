@@ -61,8 +61,8 @@ git clone https://github.com/Erikvdv/realworldapiminimal
 The application will generate several `.dll` files.
 
 ```bash
-cd src/Api/bin/Debug/net8.0/
-dotnet build
+cd src/Api/
+dotnet dotnet publish --configuration Release
 ```
 
 #### Running locally
@@ -70,6 +70,7 @@ dotnet build
 The API will (by default) start at port 5000.
 
 ```bash
+cd bin/Release/net8.0/publish
 dotnet Api.dll
 ```
 
@@ -92,6 +93,7 @@ To make it simple, we will start by zipping the whole application:
 
 ```bash
 sudo apt install zip -y
+
 zip -r /tmp/app.zip .
 ```
 
@@ -247,12 +249,12 @@ to the current Azure user to provide access to the specific blob container.
 SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo $SUBSCRIPTION_ID
 
-USER_ID=$(az ad signed-in-user show --query id -o tsv)
-echo $USER_ID
+USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
+echo $USER_PRINCIPAL_ID
 
 az role assignment create \
   --role "Storage Blob Data Contributor" \
-  --assignee $USER_ID \
+  --assignee $USER_PRINCIPAL_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
 ```
 
@@ -280,9 +282,20 @@ az storage blob list \
 
 ## Databases
 
+![Blueprint of an archive](images/blueprint-archive.jpg)
 
-Standard_B1ms
+Azure provides several managed database options, including Azure SQL Database for SQL Server-based applications, Azure SQL Managed Instance for existing SQL Server workloads, and Azure Database for PostgreSQL, MySQL, and MariaDB for open-source databases. Azure Cosmos DB supports globally distributed, multi-model databases, while Azure Managed Instance for Apache Cassandra offers a managed service for Cassandra. For analytics, Azure Synapse Analytics serves as a data warehousing solution, and Azure Cache for Redis provides in-memory caching. These services offer varying levels of control, scalability, and compatibility to meet different application requirements.
 
+
+### Azure Database for PostgreSQL Flexible Server
+
+Offers more control and flexibility compared to the Single Server option. Flexible Server allows for greater customization of database configurations and supports **high availability** within a single availability zone or across multiple zones. It also provides cost optimization features, such as the ability to **stop and start the server**, and supports **burstable** compute tiers for workloads that don't require continuous compute capacity. Additionally, Flexible Server includes built-in connection **pooling with PgBouncer**, supports a wider range of PostgreSQL versions, and allows for co-location with application tiers to reduce latency. In contrast, Single Server has more limited configuration options and is on a retirement path, with recommendations to migrate to Flexible Server for enhanced features and capabilities
+
+### Server creation
+
+This script will create the server with **public connectivity**, which is obviously a bad choice for production workloads but will make access to the database more straightforward during lab time.
+
+```bash
 SQL_PASS=MyP@ssword$RANDOM
 echo $SQL_PASS > sql_pass.txt
 
@@ -290,11 +303,21 @@ az postgres flexible-server create \
   --resource-group $USER-rg \
   --name $USER-app-db \
   --database-name conduit \
+  --public-access 0.0.0.0 \
   --admin-user dbadmin \
   --admin-password $SQL_PASS \
   --tier Burstable \
   --sku-name Standard_B1ms 
 
+az postgres flexible-server list --output table
+  
+```
+
+### Firewall configuration
+
+This step is optional, as the rule creation was already included in the server creation command.
+
+```bash
 MY_IP=$(curl ifconfig.me)
 
 az postgres flexible-server firewall-rule create \
@@ -303,56 +326,96 @@ az postgres flexible-server firewall-rule create \
   --start-ip-address $MY_IP \
   --end-ip-address $MY_IP \
   --output table
+```
 
-az postgres flexible-server list --output table
+### Checking database
 
-CONN=$(az postgres flexible-server show-connection-string \
-  --server-name $USER-app-db \
-  --database-name conduit \
-  --admin-user dbadmin \
-  --admin-password $SQL_PASS \
-  --query connectionStrings.psql_cmd \
-  --output tsv)
+If required, use `cat sql_pass.txt` to know which password was used for creating the server.
 
+```bash
+sudo apt install postgresql-client-common postgresql-client -y
 
-sudo apt install postgresql-client-common -y
-sudo apt-get install postgresql-client
-psql "--host=javi-app-db.postgres.database.azure.com" "--port=5432" "--dbname=conduit" "--username=dbadmin" "--set=sslmode=require"
+psql 
+  --host=$USER-app-db.postgres.database.azure.com
+  --port=5432
+  --dbname=conduit
+  --username=dbadmin
+  --set=sslmode=require
+```
 
-## Security and Identity
+## Application configuration
 
 ![A blueprint of a vault](images/blueprint-of-a-vault.jpg)
 
+### App Configuration service
 
-### Azure Vault
+Azure App Configuration enables the **centralization of application settings** and **feature flags**. It is built on a simple **key-value** pair model. This service supports **hierarchical namespaces**, labeling, and extensive querying. Also integrates with other Azure services, enabling **dynamic configuration** updates without redeploying applications. While it provides encryption for data in transit and at rest, it is not intended for storing sensitive information like secrets.
 
+
+### Azure Key Vault
+
+Azure Key Vault is a cloud service designed to securely store and **manage sensitive information** such as cryptographic keys, secrets, and certificates. Key Vault supports **secrets management**, allowing users to securely store tokens, passwords, API keys, and other sensitive data. It also facilitates key management by enabling the creation and control of encryption keys used to protect data. Additionally, Key Vault manages digital certificates, helping with authentication and encryption processes.
+
+Key Vaults are billed by number of operations, so it is advisable to use different vaults for different environments.
+
+```bash
 az provider register --name Microsoft.KeyVault
 az keyvault create \
   --resource-group $USER-rg \
   --name $USER-app-vault \
   --enable-rbac-authorization
+```
 
+### Secret management authorization
+
+When *RBAC authorization* is enable, the user must have the [proper role](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) (authorization) assigned before creating or reading secrets.
+
+*Key Vault Administrator* is required for storing secrets, but *Key Vault Secrets User* is enough for reading purposes.
+
+```bash
 SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
-echo $SUBSCRIPTION_ID
+echo The current subscription is $SUBSCRIPTION_ID.
 
-USER_ID=$(az ad signed-in-user show --query id -o tsv)
-echo $USER_ID
-
-https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations
+USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
+echo The user identifier is $USER_PRINCIPAL_ID.
 
 az role assignment create \
   --role "Key Vault Administrator" \
-  --assignee $USER_ID \
+  --assignee $USER_PRINCIPAL_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.KeyVault/vaults/$USER-app-vault"
+```
 
+### Creating a new secret
+
+First we retreive the connection string for the database.
+
+```bash
+CONN=$(az postgres flexible-server show-connection-string \
+  --server-name $USER-app-db \
+  --database-name conduit \
+  --admin-user dbadmin \
+  --admin-password $SQL_PASS \
+  --query  "connectionStrings.\"ado.net\"" \
+  --output tsv)
+echo The connection string is $CONN.
+```
+
+Let's store the value of the connection string as a secret (double dashes are used for emulating a hierarchy in the plain key-value space of a vault):
+
+```bash
 az keyvault secret set \
   --vault-name $USER-app-vault \
-  --name "MySecret" \
-  --value "MySecretValue" 
+  --name app--db \
+  --value "$CONN"
+```
 
+And check if it exist
+
+```bash
 az keyvault secret show \
-  --vault-name "$USER-app-vault" \
-  --name "MySecret"
+  --vault-name $USER-app-vault \
+  --name app--db
+```
 
 ## App Services
 
@@ -360,6 +423,105 @@ Platform as a Service (PaaS) is a cloud computing service model that provides a 
 
 Azure App Service is a PaaS offering from Microsoft for hosting web applications, REST APIs, and mobile back ends. It supports **multiple programming** operating systems, languages and frameworks. App Service provides a range of features such as automatic **scaling**, continuous **deployment**, security, and integration with other Azure services like authentication.
 
+az appservice plan create \
+  --resource-group $USER-rg \
+  --name $USER-service-plan \
+  --is-linux
+
+az webapp create \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --plan $USER-service-plan \
+  --runtime "DOTNETCORE|8.0"
+
+az webapp identity assign \
+  --resource-group $USER-rg \
+  --name $USER-app \
+
+
+APP_PRINCIPAL_ID=$(az webapp identity show \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --query principalId \
+  --output tsv)
+echo The indentity of the app is $APP_PRINCIPAL_ID.
+
+SUBSCRIPTION_ID=$(az account show \
+  --query "id" \
+  --output tsv)
+echo The subscription ID is $SUBSCRIPTION_ID.
+
+az role assignment create \
+  --role "Key Vault Secrets User" \
+  --assignee $APP_PRINCIPAL_ID \
+  --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.KeyVault/vaults/$USER-app-vault
+
+
+SECRET_URI=$(az keyvault secret show \
+  --name app--db \
+  --vault-name $USER-app-vault \
+  --query id \
+  --output tsv)
+echo The secret URI is $SECRET_URI.
+
+az webapp config appsettings set \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --settings DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
+
+az webapp config appsettings list \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --output table
+
+az role assignment create \
+  --role "Storage Blob Data Reader" \
+  --assignee $APP_PRINCIPAL_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
+
+az webapp deploy \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --src-url "https://${USER}repositorysa.blob.core.windows.net/appversions/app.zip" \
+  --type 'zip' \
+  --track-status
+
+  
+******************************************************
+EXPIRY=$(date -u -d "1 day" '+%Y-%m-%dT%H:%MZ')
+URL=$(az storage blob generate-sas --full-uri --permissions r \
+  --expiry $EXPIRY \
+  --account-name ${USER}repositorysa \
+  -c appversions \
+  -n app.zip \
+  --output tsv)
+az webapp deploy \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --src-url $URL \
+  --type 'zip' \
+  --track-status
+
+******************************************
+
+
+az webapp deploy \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --src-path /tmp/app.zip \
+  --type 'zip' \
+  --track-status
+
+URL=$(az webapp show \
+  --resource-group $USER-rg \
+  --name $USER-app \
+  --query "defaultHostName" \
+  --output tsv)
+
+APIURL=$URL ./run-api-tests.sh
+
+
+ dotnet new web -o myminimalapp
 
 
 ## Networking
