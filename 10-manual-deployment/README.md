@@ -703,3 +703,6 @@ az network vnet subnet update \
 
 
 A split image with the left part depicting the blueprint of a simple starship and the right part the photorealistic realization of it. 
+
+
+https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/postgresql/flexible-server/tutorial-webapp-server-vnet.md
