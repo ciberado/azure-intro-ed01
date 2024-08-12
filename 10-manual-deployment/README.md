@@ -615,3 +615,4 @@ echo The application is accessible at https://$HOST
 
 APIURL=https://$HOST ./run-api-tests.sh
 ```
+
