@@ -215,7 +215,7 @@ Each storage account has a unique namespace accessible globally via HTTP or **HT
 
 ```bash
 az storage account create \
-  --name $PREFIXrepositorysa \
+  --name ${PREFIX}repositorysa \
   --resource-group $PREFIX-rg \
   --sku Standard_LRS \
   --encryption-services blob
@@ -227,7 +227,7 @@ Azure Blob Storage is an **object storage** service designed for storing large a
 
 ```bash
 az storage container create \
-  --account-name $PREFIXrepositorysa \
+  --account-name ${PREFIX}repositorysa \
   --name appversions \
   --auth-mode login
 ```
@@ -241,7 +241,7 @@ it has been created by the same user. That is why uploading a file to it
 
 ```bash
 az storage blob upload \
-  --account-name $PREFIXrepositorysa \
+  --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -253,15 +253,15 @@ to the current Azure user to provide access to the specific blob container.
 
 ```bash
 SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
-echo $SUBSCRIPTION_ID
+echo Your current subscription is $SUBSCRIPTION_ID.
 
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
-echo $PREFIX_PRINCIPAL_ID
+echo Your user identity is $USER_PRINCIPAL_ID.
 
 az role assignment create \
   --role "Storage Blob Data Contributor" \
-  --assignee $PREFIX_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/$PREFIXrepositorysa"
+  --assignee $USER_PRINCIPAL_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
 ```
 
 **Wait a few seconds**, as the role assignment requires broad propagation. Now try to
@@ -269,7 +269,7 @@ upload the file again.
 
 ```bash
 az storage blob upload \
-  --account-name $PREFIXrepositorysa \
+  --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -280,7 +280,7 @@ Use the `list` command to ensure that the file has been correctly put in the blo
 
 ```bash
 az storage blob list \
-  --account-name $PREFIXrepositorysa \
+  --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --output table \
   --auth-mode login
@@ -315,8 +315,7 @@ az postgres flexible-server create \
   --tier Burstable \
   --sku-name Standard_B1ms 
 
-az postgres flexible-server list --output table
-  
+az postgres flexible-server list --output table  
 ```
 
 ### Firewall configuration
@@ -325,6 +324,7 @@ This step is optional, as the rule creation was already included in the server c
 
 ```bash
 MY_IP=$(curl ifconfig.me)
+echo Your current IP is $MY_IP.
 
 az postgres flexible-server firewall-rule create \
   --resource-group $PREFIX-rg \
@@ -337,15 +337,20 @@ az postgres flexible-server firewall-rule create \
 ### Checking database
 
 If required, use `cat sql_pass.txt` to know which password was used for creating the server.
+If you can't connect to the database, please check if there is any VPN/Firewall software running in your
+machine (zScaler or similar) that prevents the connection from your side.
+
+Alternatively, use the [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) to connect from the
+cloud itself.
 
 ```bash
 sudo apt install postgresql-client-common postgresql-client -y
 
-psql 
-  --host=$PREFIX-app-db.postgres.database.azure.com
-  --port=5432
-  --dbname=conduit
-  --username=dbadmin
+psql \
+  --host=$PREFIX-app-db.postgres.database.azure.com \
+  --port=5432 \
+  --dbname=conduit \
+  --username=dbadmin \
   --set=sslmode=require
 ```
 
@@ -383,11 +388,11 @@ SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo The current subscription is $SUBSCRIPTION_ID.
 
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
-echo The user identifier is $PREFIX_PRINCIPAL_ID.
+echo The user identifier is $USER_PRINCIPAL_ID.
 
 az role assignment create \
   --role "Key Vault Administrator" \
-  --assignee $PREFIX_PRINCIPAL_ID \
+  --assignee $USER_PRINCIPAL_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault"
 ```
 
@@ -546,7 +551,7 @@ SAS_URL=$(az storage blob generate-sas \
   --full-uri \
   --permissions r \
   --expiry $EXPIRY \
-  --account-name $PREFIXrepositorysa \
+  --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --output tsv)
@@ -574,7 +579,7 @@ echo The indentity of the app is $APP_PRINCIPAL_ID.
 az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $APP_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/$PREFIXrepositorysa"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
 ```
 
 Wait a few seconds until the changes are propagated.
@@ -583,7 +588,7 @@ Wait a few seconds until the changes are propagated.
 az webapp deploy \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
-  --src-url "https://$PREFIXrepositorysa.blob.core.windows.net/appversions/app.zip" \
+  --src-url "https://${PREFIX}repositorysa.blob.core.windows.net/appversions/app.zip" \
   --type 'zip' \
   --track-status
 ```
@@ -601,11 +606,12 @@ az webapp log tail \
 Now feel free to run the test battery against the remote application:
 
 ```bash
-URL=$(az webapp show \
+HOST=$(az webapp show \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --query "defaultHostName" \
   --output tsv)
+echo The application is accessible at https://$HOST
 
-APIURL=$URL ./run-api-tests.sh
+APIURL=https://$HOST ./run-api-tests.sh
 ```
