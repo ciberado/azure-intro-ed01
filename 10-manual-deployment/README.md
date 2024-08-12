@@ -109,6 +109,8 @@ The Azure portal is a **web-based**, unified management console that allows user
 
 ### The API
 
+Install the CLI tool and create an environment variable so you don't collision with other students:
+
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 az version
@@ -116,6 +118,10 @@ az login --use-device-code
 
 
 az account show
+```
+
+```bash
+export PREFIX=<your own prefix, like $USER or a random id>
 ```
 
 ### Physical global infrastructure
@@ -193,7 +199,7 @@ The region of the resource group is where its metadata is kept, but resources be
 
 ```bash
 az group create \
-  --name $USER-rg \
+  --name $PREFIX-rg \
   --location westeurope
 ```
 
@@ -209,8 +215,8 @@ Each storage account has a unique namespace accessible globally via HTTP or **HT
 
 ```bash
 az storage account create \
-  --name ${USER}repositorysa \
-  --resource-group $USER-rg \
+  --name $PREFIXrepositorysa \
+  --resource-group $PREFIX-rg \
   --sku Standard_LRS \
   --encryption-services blob
 ```
@@ -221,7 +227,7 @@ Azure Blob Storage is an **object storage** service designed for storing large a
 
 ```bash
 az storage container create \
-  --account-name ${USER}repositorysa \
+  --account-name $PREFIXrepositorysa \
   --name appversions \
   --auth-mode login
 ```
@@ -235,7 +241,7 @@ it has been created by the same user. That is why uploading a file to it
 
 ```bash
 az storage blob upload \
-  --account-name ${USER}repositorysa \
+  --account-name $PREFIXrepositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -250,12 +256,12 @@ SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo $SUBSCRIPTION_ID
 
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
-echo $USER_PRINCIPAL_ID
+echo $PREFIX_PRINCIPAL_ID
 
 az role assignment create \
   --role "Storage Blob Data Contributor" \
-  --assignee $USER_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
+  --assignee $PREFIX_PRINCIPAL_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/$PREFIXrepositorysa"
 ```
 
 **Wait a few seconds**, as the role assignment requires broad propagation. Now try to
@@ -263,7 +269,7 @@ upload the file again.
 
 ```bash
 az storage blob upload \
-  --account-name ${USER}repositorysa \
+  --account-name $PREFIXrepositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -274,7 +280,7 @@ Use the `list` command to ensure that the file has been correctly put in the blo
 
 ```bash
 az storage blob list \
-  --account-name ${USER}repositorysa \
+  --account-name $PREFIXrepositorysa \
   --container-name appversions \
   --output table \
   --auth-mode login
@@ -300,8 +306,8 @@ SQL_PASS=MyP@ssword$RANDOM
 echo $SQL_PASS > sql_pass.txt
 
 az postgres flexible-server create \
-  --resource-group $USER-rg \
-  --name $USER-app-db \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app-db \
   --database-name conduit \
   --public-access 0.0.0.0 \
   --admin-user dbadmin \
@@ -321,8 +327,8 @@ This step is optional, as the rule creation was already included in the server c
 MY_IP=$(curl ifconfig.me)
 
 az postgres flexible-server firewall-rule create \
-  --resource-group $USER-rg \
-  --name $USER-app-db \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app-db \
   --start-ip-address $MY_IP \
   --end-ip-address $MY_IP \
   --output table
@@ -336,7 +342,7 @@ If required, use `cat sql_pass.txt` to know which password was used for creating
 sudo apt install postgresql-client-common postgresql-client -y
 
 psql 
-  --host=$USER-app-db.postgres.database.azure.com
+  --host=$PREFIX-app-db.postgres.database.azure.com
   --port=5432
   --dbname=conduit
   --username=dbadmin
@@ -361,8 +367,8 @@ Key Vaults are billed by number of operations, so it is advisable to use differe
 ```bash
 az provider register --name Microsoft.KeyVault
 az keyvault create \
-  --resource-group $USER-rg \
-  --name $USER-app-vault \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app-vault \
   --enable-rbac-authorization
 ```
 
@@ -377,12 +383,12 @@ SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo The current subscription is $SUBSCRIPTION_ID.
 
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
-echo The user identifier is $USER_PRINCIPAL_ID.
+echo The user identifier is $PREFIX_PRINCIPAL_ID.
 
 az role assignment create \
   --role "Key Vault Administrator" \
-  --assignee $USER_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.KeyVault/vaults/$USER-app-vault"
+  --assignee $PREFIX_PRINCIPAL_ID \
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault"
 ```
 
 ### Creating a new secret
@@ -391,7 +397,7 @@ First we retreive the connection string for the database.
 
 ```bash
 CONN=$(az postgres flexible-server show-connection-string \
-  --server-name $USER-app-db \
+  --server-name $PREFIX-app-db \
   --database-name conduit \
   --admin-user dbadmin \
   --admin-password $SQL_PASS \
@@ -404,7 +410,7 @@ Let's store the value of the connection string as a secret (double dashes are us
 
 ```bash
 az keyvault secret set \
-  --vault-name $USER-app-vault \
+  --vault-name $PREFIX-app-vault \
   --name app--db \
   --value "$CONN"
 ```
@@ -413,7 +419,7 @@ And check if it exist
 
 ```bash
 az keyvault secret show \
-  --vault-name $USER-app-vault \
+  --vault-name $PREFIX-app-vault \
   --name app--db
 ```
 
@@ -431,14 +437,14 @@ An **App Service plan**, defines the **set of compute resources and configuratio
 
 ```bash
 az appservice plan create \
-  --resource-group $USER-rg \
-  --name $USER-service-plan \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-service-plan \
   --is-linux
 
 az webapp create \
-  --resource-group $USER-rg \
-  --name $USER-app \
-  --plan $USER-service-plan \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
+  --plan $PREFIX-service-plan \
   --runtime "DOTNETCORE|8.0"
 ```
 
@@ -446,8 +452,8 @@ Even if the command returns after a few seconds, several minutes may be required
 
 ```bash
 az webapp log tail \
-  --resource-group $USER-rg \
-  --name $USER-app
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app
 ```
 
 ### App identity
@@ -456,12 +462,12 @@ A web app identity in Azure refers to a managed identity that allows Azure appli
 
 ```bash
 az webapp identity assign \
-  --resource-group $USER-rg \
-  --name $USER-app
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app
 
 APP_PRINCIPAL_ID=$(az webapp identity show \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --query principalId \
   --output tsv)
 echo The indentity of the app is $APP_PRINCIPAL_ID.
@@ -477,7 +483,7 @@ SUBSCRIPTION_ID=$(az account show \
   --output tsv)
 echo The subscription ID is $SUBSCRIPTION_ID.
 
-SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.KeyVault/vaults/$USER-app-vault
+SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault
 
 az role assignment create \
   --role "Key Vault Secrets User" \
@@ -492,19 +498,19 @@ A Key Vault reference in Azure App Configuration allows applications to securely
 ```bash
 SECRET_URI=$(az keyvault secret show \
   --name app--db \
-  --vault-name $USER-app-vault \
+  --vault-name $PREFIX-app-vault \
   --query id \
   --output tsv)
 echo The secret URI is $SECRET_URI.
 
 az webapp config appsettings set \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --settings DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
 
 az webapp config appsettings list \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --output table
 ```
 
@@ -520,8 +526,8 @@ Deploying from a local file may be useful for testing purposes, or for creating 
 
 ```bash
 az webapp deploy \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --src-path /tmp/app.zip \
   --type 'zip' \
   --track-status
@@ -540,14 +546,14 @@ SAS_URL=$(az storage blob generate-sas \
   --full-uri \
   --permissions r \
   --expiry $EXPIRY \
-  --account-name ${USER}repositorysa \
+  --account-name $PREFIXrepositorysa \
   --container-name appversions \
   --name app.zip \
   --output tsv)
 
 az webapp deploy \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --src-url $SAS_URL \
   --type 'zip' \
   --track-status
@@ -559,8 +565,8 @@ RBAC provides **fine-grained access** management, allowing administrators to ass
 
 ```bash
 APP_PRINCIPAL_ID=$(az webapp identity show \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --query principalId \
   --output tsv)
 echo The indentity of the app is $APP_PRINCIPAL_ID.
@@ -568,16 +574,16 @@ echo The indentity of the app is $APP_PRINCIPAL_ID.
 az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $APP_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$USER-rg/providers/Microsoft.Storage/storageAccounts/${USER}repositorysa"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/$PREFIXrepositorysa"
 ```
 
 Wait a few seconds until the changes are propagated.
 
 ```bash
 az webapp deploy \
-  --resource-group $USER-rg \
-  --name $USER-app \
-  --src-url "https://${USER}repositorysa.blob.core.windows.net/appversions/app.zip" \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
+  --src-url "https://$PREFIXrepositorysa.blob.core.windows.net/appversions/app.zip" \
   --type 'zip' \
   --track-status
 ```
@@ -588,121 +594,18 @@ Use `az webapp log tail` to start live log tracing for an Azure web application.
 
 ```bash
 az webapp log tail \
-  --resource-group $USER-rg \
-  --name $USER-app
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app
 ``
 
 Now feel free to run the test battery against the remote application:
 
 ```bash
 URL=$(az webapp show \
-  --resource-group $USER-rg \
-  --name $USER-app \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
   --query "defaultHostName" \
   --output tsv)
 
 APIURL=$URL ./run-api-tests.sh
 ```
-
-## Networking
-
-![Blueprint of multiple pipes and tubes, by Dall-E](images/blueprint-of-pumps-and-tubes.jpg)
-
-[Azure Virtual Network](https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-overview) 
-(VNet) is the fundamental building block for private networks 
-in Azure, providing a **logically isolated network environment** in the cloud. 
-
-Key components of a VNet include **subnets for segmentation**, **IP addresses** (both public and private), 
-**Network Security Groups** (NSGs) for traffic control, and various connectivity options such as VPN gateways and ExpressRoute for hybrid cloud setups. 
-
-VNets also support **service endpoints** for secure access to Azure services, and can be connected to other VNets, enabling resources in different VNets to communicate with each other.
-
-Overall, VNets define the perimeter of an infrastructure deployed on Azure.
-
-```bash
-az network vnet create \
-  --name $USER-vnet \
-  --resource-group $USER-rg \
-  --location westeurope \
-  --address-prefix 192.168.0.0/16
-```
-
-### VNet and IP ranges
-
-
-### Subnetting
-
-Dividing a virtual network into subnets improves organization and segmentation of resources and allows increased security through granular access controls using Network Security Groups (NSGs). 
-
-Subnets facilitate traffic management and resource isolation, allowing different types of resources (such as public and private) to be separated for better security and compliance.
-
-Subnets on Azure spans through all the Availability Zones present in a region. Let's caculate the network range of two subnets, each one with a maximum of 1022 devices.
-
-```bash
-sudo apt-get install ipcalc -y
-ipcalc 192.168.0.0/16 -s 1022 1022 
-```
-
-Now, we can use the result 
-
-```bash
-az network vnet subnet create \
-  --resource-group $USER-rg \
-  --vnet-name $USER-vnet \
-  --name $USER-subnet-public \
-  --address-prefix 192.168.0.0/22
-```
-
-### Network security groups
-
-```bash
-az network nsg create \
-  --name $USER-web-nsg \
-  --resource-group $USER-rg \
-  --location westeurope
-```
-
-```bash
-az network nsg rule create \
-  --resource-group $USER-rg \
-  --nsg-name $USER-web-nsg \
-  --name AllowWebPorts \
-  --protocol tcp \
-  --direction inbound \
-  --priority 500 \
-  --source-address-prefix '*' \
-  --source-port-range '*' \
-  --destination-address-prefix '*' \
-  --destination-port-range 80 8080 443 \
-  --access allow
-```
-
-```bash
-az network vnet subnet update \
-  --resource-group $USER-rg \
-  --vnet-name $USER-vnet \
-  --name $USER-subnet-public \
-  --network-security-group $USER-web-nsg
-```
-
-
-
-
-## Managed computation
-
-## Databases
-
-
-
-
-
-
-
-
-
-
-
-A split image with the left part depicting the blueprint of a simple starship and the right part the photorealistic realization of it. 
-
-
-https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/postgresql/flexible-server/tutorial-webapp-server-vnet.md
