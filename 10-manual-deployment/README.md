@@ -57,6 +57,21 @@ git clone https://github.com/Erikvdv/realworldapiminimal
 cd realworldapiminimal
 ```
 
+#### Source code changes
+
+Later on, we will inject the database connection string as application configuration.
+We want to check that it has been succesfully added, so we will add a few lines in the
+source code to print the value of the environment variable.
+
+```bash
+sed -i '67a\
+     \
+    // Here we would open a connection to the Postgres server\
+    var DB_CONN = Environment.GetEnvironmentVariable("DB_CONN");\
+    Console.Out.WriteLine($"The connection string value would be: {DB_CONN}");\
+' src/Api/Program.cs
+```
+
 #### Local building
 
 The application will generate several `.dll` files.
@@ -67,11 +82,12 @@ dotnet dotnet publish --configuration Release
 
 #### Running locally
 
-The API will (by default) start at port 5000.
+The API will (by default) start at port 5000. Check the output of the application to see
+how it prints the provided connection string.
 
 ```bash
 cd src/Api/bin/Release/net8.0/publish
-dotnet Api.dll
+DB_CONN=fake_connection dotnet Api.dll
 ```
 
 #### Testing
