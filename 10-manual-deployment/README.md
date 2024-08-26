@@ -114,9 +114,17 @@ Install the CLI tool and create an environment variable so you don't collision w
 ```bash
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 az version
+```
+
+Let's login into Azure using your web browser:
+
+```bash
 az login --use-device-code
+```
 
+Check what is the current Azure account configuration:
 
+```bash
 az account show
 ```
 
@@ -135,6 +143,8 @@ An Azure region is a geographic area that contains a **set of data centers** con
 
 Each region can consist of one or more data centers, and Azure currently operates over **60 regions worldwide**.
 
+You can list the different locations in Europe using the following command:
+
 ```bash
 az account list-locations --output table \
   | grep "(Europe)"
@@ -143,6 +153,10 @@ az account list-locations --output table \
 #### [Availability Zones](https://news.microsoft.com/stories/microsoft-datacenter-tour/)
 
 An availability zone in cloud computing is a distinct location within a region that is **designed to be isolated from failures** in other availability zones. Each availability zone has its own independent power, cooling, and networking infrastructure to ensure high availability and fault tolerance. They are geographically separated to mitigate the risk of local disasters affecting multiple zones simultaneously, yet close enough to provide low-latency network connectivity for data replication and resource distribution. This setup allows cloud providers to offer resilient and reliable services by distributing applications and data across multiple availability zones within a region.
+
+Many resources are automatically distributed and region-wide. Others require more attention from
+the architecture point of view. For example, not all types of virtual machines can be deployed
+on every AZ, as you can check using this snippet: 
 
 ```bash
 az vm list-skus \
@@ -156,7 +170,7 @@ az vm list-skus \
 
 #### Accounts
 
-An Azure Account is the first identity created when an organization
+An Azure Account is the **first identity** created when an organization
 joins Azure, using an email address as the subject identifier. The
 account is associated to a Tenant.
 
@@ -197,6 +211,8 @@ Multiple resource groups may be used for different environments, but they are mo
 
 The region of the resource group is where its metadata is kept, but resources belonging to it can be deployed in any other region.
 
+Let's create a resource group:
+
 ```bash
 az group create \
   --name $PREFIX-rg \
@@ -213,6 +229,8 @@ An Azure Storage Account is a fundamental component of Microsoft's cloud storage
 
 Each storage account has a unique namespace accessible globally via HTTP or **HTTPS**, ensuring that data is highly available and protected through redundancy options.
 
+Create a storage account that will serve as artifact repository:
+
 ```bash
 az storage account create \
   --name ${PREFIX}repositorysa \
@@ -224,6 +242,8 @@ az storage account create \
 ### Blob storage
 
 Azure Blob Storage is an **object storage** service designed for storing large amounts of unstructured data, such as text and binary files. It supports three types of **blobs—block** blobs for documents and media, **append blobs** for logging, and **page blobs** for virtual machine disks.
+
+Add a blob container to the previously created storage account:
 
 ```bash
 az storage container create \
@@ -254,10 +274,14 @@ to the current Azure user to provide access to the specific blob container.
 ```bash
 SUBSCRIPTION_ID=$(az account show --query "id" --output tsv)
 echo Your current subscription is $SUBSCRIPTION_ID.
+```
 
+```bash
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
 echo Your user identity is $USER_PRINCIPAL_ID.
+```
 
+```bash
 az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $USER_PRINCIPAL_ID \
@@ -301,10 +325,16 @@ Offers more control and flexibility compared to the Single Server option. Flexib
 
 This script will create the server with **public connectivity**, which is obviously a bad choice for production workloads but will make access to the database more straightforward during lab time.
 
-```bash
-SQL_PASS=MyP@ssword$RANDOM
-echo $SQL_PASS > sql_pass.txt
+Let's first choose a password. As this is a lab, we will take note of it in a file.
 
+```bash
+export SQL_PASS=MyP@ssword$RANDOM
+echo $SQL_PASS > sql_pass.txt
+```
+
+Now we can create the database server:
+
+```bash
 az postgres flexible-server create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app-db \
@@ -314,16 +344,23 @@ az postgres flexible-server create \
   --admin-password $SQL_PASS \
   --tier Burstable \
   --sku-name Standard_B1ms 
+```
 
+It will take some time to provision. Once available, use the following command to get
+details about the instance:
+
+```bash
 az postgres flexible-server list --output table  
 ```
 
 ### Firewall configuration
 
-This step is optional, as the rule creation was already included in the server creation command.
+By default, the database servers have null connectivity thanks to their database and it is
+necessary to open it to accept incoming connections. In our case
+this step is optional, as the rule creation was already included in the server creation command.
 
 ```bash
-MY_IP=$(curl ifconfig.me)
+export MY_IP=$(curl ifconfig.me)
 echo Your current IP is $MY_IP.
 
 az postgres flexible-server firewall-rule create \
@@ -341,11 +378,18 @@ If you can't connect to the database, please check if there is any VPN/Firewall 
 machine (zScaler or similar) that prevents the connection from your side.
 
 Alternatively, use the [Azure Cloud Shell](https://portal.azure.com/#cloudshell/) to connect from the
-cloud itself.
+cloud itself (but remember that you need to open the CloudShell IP in the firewall using the previous
+commnad).
+
+Let's install a database client:
 
 ```bash
 sudo apt install postgresql-client-common postgresql-client -y
+```
 
+So now we can connect to it:
+
+```bash
 psql \
   --host=$PREFIX-app-db.postgres.database.azure.com \
   --port=5432 \
@@ -369,8 +413,22 @@ Azure Key Vault is a cloud service designed to securely store and **manage sensi
 
 Key Vaults are billed by number of operations, so it is advisable to use different vaults for different environments.
 
+Not all services are active by default in each subscription. Most of them must be
+registered before accessing them, as you can see using the next command:
+
+```bash
+az provider list --output table 
+```
+
+Let's ensure that the Key Vault service is registered:
+
 ```bash
 az provider register --name Microsoft.KeyVault
+```
+
+Now it is possible to create a new vault:
+
+```bash
 az keyvault create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app-vault \
@@ -389,7 +447,9 @@ echo The current subscription is $SUBSCRIPTION_ID.
 
 USER_PRINCIPAL_ID=$(az ad signed-in-user show --query id -o tsv)
 echo The user identifier is $USER_PRINCIPAL_ID.
+```
 
+```bash
 az role assignment create \
   --role "Key Vault Administrator" \
   --assignee $USER_PRINCIPAL_ID \
@@ -401,7 +461,7 @@ az role assignment create \
 First we retreive the connection string for the database.
 
 ```bash
-CONN=$(az postgres flexible-server show-connection-string \
+export CONN=$(az postgres flexible-server show-connection-string \
   --server-name $PREFIX-app-db \
   --database-name conduit \
   --admin-user dbadmin \
@@ -445,7 +505,9 @@ az appservice plan create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-service-plan \
   --is-linux
+```
 
+```bash
 az webapp create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
@@ -469,8 +531,10 @@ A web app identity in Azure refers to a managed identity that allows Azure appli
 az webapp identity assign \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app
+```
 
-APP_PRINCIPAL_ID=$(az webapp identity show \
+```bash
+export APP_PRINCIPAL_ID=$(az webapp identity show \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --query principalId \
@@ -483,12 +547,14 @@ echo The indentity of the app is $APP_PRINCIPAL_ID.
 A role is required to access Azure Key Vault from an App Service due to Azure's role-based access control (RBAC) system, which governs permissions for accessing resources. When an App Service needs to retrieve secrets, keys, or certificates from a Key Vault, it must have an appropriate role assigned to its managed identity. This ensures that only authorized applications can access sensitive information, enhancing security and compliance.
 
 ```bash
-SUBSCRIPTION_ID=$(az account show \
+export SUBSCRIPTION_ID=$(az account show \
   --query "id" \
   --output tsv)
 echo The subscription ID is $SUBSCRIPTION_ID.
+```
 
-SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault
+```bash
+export SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault
 
 az role assignment create \
   --role "Key Vault Secrets User" \
@@ -500,19 +566,29 @@ az role assignment create \
 
 A Key Vault reference in Azure App Configuration allows applications to securely reference secrets stored in Azure Key Vault **without exposing the actual secret** values. Instead of storing sensitive information directly within the application configuration, developers can use a **reference notation** that points to the secret's URI in Key Vault. The application must authenticate separately to both Azure App Configuration and Azure Key Vault to retrieve the referenced secrets, ensuring that sensitive data remains protected and access is controlled through Azure's role-based access control (RBAC) system.
 
+Try first getting the unique identifier of the secret `app--db`:
+
 ```bash
-SECRET_URI=$(az keyvault secret show \
+export SECRET_URI=$(az keyvault secret show \
   --name app--db \
   --vault-name $PREFIX-app-vault \
   --query id \
   --output tsv)
 echo The secret URI is $SECRET_URI.
+```
 
+Add a reference to it in the webapp configuration:
+
+```bash
 az webapp config appsettings set \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --settings DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
+```
 
+Check that the command worked:
+
+```bash
 az webapp config appsettings list \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
@@ -544,8 +620,10 @@ Shared Access Signature (SAS) authorization in Azure Storage allows you to grant
 
 Compared to Role-Based Access Control (RBAC), Shared Access Signature (SAS) authorization **has several disadvantages**. SAS tokens provide limited flexibility and granularity, as they grant access based on predefined permissions without considering user attributes or context, which can lead to over-privileged access. Additionally, SAS tokens can be difficult to manage and revoke; once issued, they remain valid until they expire or the underlying key is regenerated, which can disrupt access for multiple users or services. In contrast, RBAC allows for more dynamic and context-aware access control, enabling organizations to easily adjust permissions as roles and responsibilities change, thus enhancing security and reducing the risk of unauthorized access.
 
+First, we need to generate a SAS URL:
+
 ```bash
-EXPIRY=$(date -u -d "1 day" '+%Y-%m-%dT%H:%MZ')
+export EXPIRY=$(date -u -d "1 day" '+%Y-%m-%dT%H:%MZ')
 
 SAS_URL=$(az storage blob generate-sas \
   --full-uri \
@@ -555,7 +633,12 @@ SAS_URL=$(az storage blob generate-sas \
   --container-name appversions \
   --name app.zip \
   --output tsv)
+```
 
+And then it is possible to instruct the webapp to be deployed using that address
+for retrieving the artifact:
+
+```bash
 az webapp deploy \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
@@ -568,21 +651,28 @@ az webapp deploy \
 
 RBAC provides **fine-grained access** management, allowing administrators to assign specific roles to users or groups, which simplifies permission management and reduces the risk of over-permissioning. In contrast, SAS tokens can create security vulnerabilities if not managed carefully, as they grant access without the same level of oversight and can be difficult to revoke. Additionally, RBAC **integrates with Azure’s identity management**, enabling better tracking and auditing of user activities, which is crucial for compliance and security.
 
+Get the security identity of the application:
+
 ```bash
-APP_PRINCIPAL_ID=$(az webapp identity show \
+export APP_PRINCIPAL_ID=$(az webapp identity show \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --query principalId \
   --output tsv)
 echo The indentity of the app is $APP_PRINCIPAL_ID.
+```
 
+Use that information to assign the `Storage Blob Data Contributor` role to the application,
+restricting it to our storage account:
+
+```bash
 az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $APP_PRINCIPAL_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
 ```
 
-Wait a few seconds until the changes are propagated.
+Wait a few seconds until the changes are propagated and then order the deployment:
 
 ```bash
 az webapp deploy \
