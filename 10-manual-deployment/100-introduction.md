@@ -1,4 +1,4 @@
-# Manually deploying an application to Azure
+# Azure application architecture
 
 ## Introduction
 
