@@ -1,6 +1,6 @@
 # Azure introduction for developers
 
-## Manual deployment
+## Azure application architecture
 
 The goal of this session will be to migrate an application to Azure, understanding basic identity concepts 
 and resource organization. We will also introduce the most important services, 
