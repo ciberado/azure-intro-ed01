@@ -28,7 +28,7 @@ az login --use-device-code
 Check what is the current Azure account configuration:
 
 ```bash
-az account show
+az account s«how»
 ```
 
 ```bash
@@ -117,7 +117,7 @@ The region of the resource group is where its metadata is kept, but resources be
 Let's create a resource group:
 
 ```bash
-az group create \
+az group «create» \
   --name $PREFIX-rg \
   --location westeurope
 ```
