@@ -1,7 +1,7 @@
 {
   "name": "redact",
   "version": "1.0.0",
-  "type" : "module",
+  "type": "module",
   "description": "A tool for generating a redacted version of markdown files, based on delimiters.",
   "main": "index.js",
   "scripts": {

@@ -1,7 +1,9 @@
+import { parseArgs } from 'node:util';
+
 import fs from 'fs';
 import path from 'path';
 
-function redact(text) {
+function redact(text, activateRedact) {
    let redactedLine = '';
    let redactIsActive = false;
     
@@ -10,7 +12,7 @@ function redact(text) {
        case '«' : redactIsActive = true; break;
        case '»' : redactIsActive = false; break;
        default : {
-         redactedLine+=redactIsActive ? '█' : letter;
+         redactedLine+=activateRedact && redactIsActive ? '█' : letter;
        }
      }
    }
@@ -30,19 +32,33 @@ function* getAllFiles(dir) {
   }
 }
 
-for (const file of getAllFiles('.')) {
-  if (file.endsWith('.md') === false) continue;
+function process(srcDir, dstDir,activateRedact) {
+  for (const file of getAllFiles(srcDir)) {
+    if (file.endsWith('.md') === false) continue;
 
-  const srcdir = path.dirname(file);
-  const fname = path.basename(file);
-  const dstdir = `/tmp/x/${srcdir}`;
-  const content = fs.readFileSync(file, 'utf-8');
-
-  console.log(`Processing ${file}.`);
-  const redactedContent = redact(content);
+    console.log(`Processing ${file}.`)
   
+    const srcDir = path.dirname(file);
+    const fname = path.basename(file);
+    const dstdir = `${dstDir}/${srcDir}`;
+    const content = fs.readFileSync(file, 'utf-8');
   
-  fs.mkdirSync(dstdir, { recursive : true});
-  fs.writeFileSync(`${dstdir}/${fname}`, redactedContent);
+    console.log(`Processing ${file}.`);
+    const redactedContent = redact(content, activateRedact);
+    
+    
+    console.log(`Writing ${dstdir}/${fname}.`)
+    fs.mkdirSync(dstdir, { recursive : true});
+    fs.writeFileSync(`${dstdir}/${fname}`, redactedContent);
+  }  
 }
 
+const args = parseArgs({
+  options: {
+      srcDir: { type: 'string', short: 's', default : '.'},
+      dstDir: { type: 'string', short: 'd', default : '/tmp' },
+      'no-redact': { type: 'boolean', short: 'n', default : false}
+  }
+}).values;
+
+process(path.resolve(args.srcDir), args.dstDir, args['no-redact']);
