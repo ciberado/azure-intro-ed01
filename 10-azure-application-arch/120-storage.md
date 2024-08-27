@@ -13,7 +13,7 @@ Each storage account has a unique namespace accessible globally via HTTP or **HT
 Create a storage account that will serve as artifact repository:
 
 ```bash
-az storage account create \
+az storage a«ccount» create \
   --name ${PREFIX}repositorysa \
   --resource-group $PREFIX-rg \
   --sku Standard_LRS \
@@ -27,7 +27,7 @@ Azure Blob Storage is an **object storage** service designed for storing large a
 Add a blob container to the previously created storage account:
 
 ```bash
-az storage container create \
+az storage c«ontainer» create \
   --account-name ${PREFIX}repositorysa \
   --name appversions \
   --auth-mode login
@@ -41,7 +41,7 @@ it has been created by the same user. That is why uploading a file to it
 **will fail**:
 
 ```bash
-az storage blob upload \
+az storage b«lob» u«pload» \
   --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
@@ -63,7 +63,7 @@ echo Your user identity is $USER_PRINCIPAL_ID.
 ```
 
 ```bash
-az role assignment create \
+az role a«ssignmen»t create \
   --role "Storage Blob Data Contributor" \
   --assignee $USER_PRINCIPAL_ID \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
@@ -73,7 +73,7 @@ az role assignment create \
 upload the file again.
 
 ```bash
-az storage blob upload \
+az storage b«lob» u«pload» \
   --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
@@ -84,7 +84,7 @@ az storage blob upload \
 Use the `list` command to ensure that the file has been correctly put in the blob container.
 
 ```bash
-az storage blob list \
+az storage b«lob» list \
   --account-name ${PREFIX}repositorysa \
   --container-name appversions \
   --output table \

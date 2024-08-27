@@ -40,7 +40,7 @@ It will take some time to provision. Once available, use the following command t
 details about the instance:
 
 ```bash
-az postgres flexible-server list --output table  
+az postgres flexible-server l«ist» --output table  
 ```
 
 ### Firewall configuration
@@ -53,7 +53,7 @@ this step is optional, as the rule creation was already included in the server c
 export MY_IP=$(curl ifconfig.me)
 echo Your current IP is $MY_IP.
 
-az postgres flexible-server firewall-rule create \
+az postgres flexible-server f«irewall-rul»e create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app-db \
   --start-ip-address $MY_IP \

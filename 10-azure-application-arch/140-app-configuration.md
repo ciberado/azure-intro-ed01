@@ -25,7 +25,7 @@ az provider list --output table
 Let's ensure that the Key Vault service is registered:
 
 ```bash
-az provider register --name Microsoft.KeyVault
+az provider register --name Microsoft.K«eyVault»
 ```
 
 Now it is possible to create a new vault:
@@ -63,7 +63,7 @@ az role assignment create \
 First we retreive the connection string for the database.
 
 ```bash
-export CONN=$(az postgres flexible-server show-connection-string \
+export CONN=$(az postgres flexible-server show-«connection»-string \
   --server-name $PREFIX-app-db \
   --database-name conduit \
   --admin-user dbadmin \
@@ -76,16 +76,16 @@ echo The connection string is $CONN.
 Let's store the value of the connection string as a secret (double dashes are used for emulating a hierarchy in the plain key-value space of a vault):
 
 ```bash
-az keyvault secret set \
+az keyvault s«ecret» s«et» \
   --vault-name $PREFIX-app-vault \
   --name app--db \
   --value "$CONN"
 ```
 
-And check if it exist
+And check if it exist:
 
 ```bash
-az keyvault secret show \
+az keyvault s«ecret» s«how» \
   --vault-name $PREFIX-app-vault \
-  --name app--db
+  --name «app--db»
 ```

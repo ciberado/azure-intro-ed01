@@ -12,19 +12,23 @@ Azure App Service is a PaaS offering from Microsoft for hosting web applications
 
 An **App Service plan**, defines the **set of compute resources and configurations** required to host web applications, REST APIs, and mobile backends on the Azure platform. Each App Service plan is associated with a specific region and includes parameters such as the operating system (Windows or Linux), the number and size of virtual machine instances, and the **pricing tier** (ranging from Free to Premium). The pricing tier affects the features available, performance, and cost of the service. Users can scale their App Service plans up or down based on their application's needs, allowing for flexibility in resource allocation and management of costs.
 
+Let's start by creating a Linux service plan:
+
 ```bash
-az appservice plan create \
+az apps«ervice» p«lan» create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-service-plan \
-  --is-linux
+  --is-l«inux»
 ```
+
+And now setup the application itself with .Net 8 support:
 
 ```bash
 az webapp create \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --plan $PREFIX-service-plan \
-  --runtime "DOTNETCORE|8.0"
+  --r«untime» "DOTNETCORE|8.0"
 ```
 
 Even if the command returns after a few seconds, several minutes may be required until all the infrastructure is correctly assinged and put in place. Run the `log tail` command and wait until entries appear on your screen. Alternatively, try to access the website and wait until the default application is returned.
@@ -39,14 +43,18 @@ az webapp log tail \
 
 A web app identity in Azure refers to a managed identity that allows Azure applications, such as those hosted on Azure App Service, to **authenticate to other Azure services** without needing to manage credentials explicitly. There are two types of managed identities: *system-assigned identities*, which are tied to a specific application and are deleted when the application is deleted, and *user-assigned identities*, which are standalone resources that can be assigned to multiple applications. Managed identities simplify the process of obtaining tokens for accessing Azure resources like Azure Key Vault or Azure SQL Database, enhancing security by eliminating the need for hard-coded secrets or credentials in the application code.
 
+By default, apps don't have an identity. But it is straightforward to set up one for them:
+
 ```bash
-az webapp identity assign \
+az webapp i«dentity» assign \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app
 ```
 
+Once this step is completed, we can get its name:
+
 ```bash
-export APP_PRINCIPAL_ID=$(az webapp identity show \
+export APP_PRINCIPAL_ID=$(az webapp i«dentity» show \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --query principalId \
@@ -89,19 +97,19 @@ export SECRET_URI=$(az keyvault secret show \
 echo The secret URI is $SECRET_URI.
 ```
 
-Add a reference to it in the webapp configuration:
+Add a reference to it in the webapp configuration by setting the env variable:
 
 ```bash
-az webapp config appsettings set \
+az webapp c«onfig» appsettings s«et» \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
-  --settings DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
+  --s«ettings» DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
 ```
 
 Check that the command worked:
 
 ```bash
-az webapp config appsettings list \
+az webapp c«onfig» appsettings list \
   --resource-group $PREFIX-rg \
   --name $PREFIX-app \
   --output table
