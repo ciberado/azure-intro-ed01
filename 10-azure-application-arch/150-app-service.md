@@ -8,6 +8,16 @@ Platform as a Service (PaaS) is a cloud computing service model that provides a 
 
 Azure App Service is a PaaS offering from Microsoft for hosting web applications, REST APIs, and mobile back ends. It supports **multiple programming** operating systems, languages and frameworks. App Service provides a range of features such as automatic **scaling**, continuous **deployment**, security, and integration with other Azure services like authentication.
 
+### Service activation
+
+Web Apps are part of the `Microsoft.App` provider. We will register it, and also
+the `Microsoft.OperationalInsights` to have access to the observability features.
+
+```bash
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.OperationalInsights
+```
+
 ### App creation
 
 An **App Service plan**, defines the **set of compute resources and configurations** required to host web applications, REST APIs, and mobile backends on the Azure platform. Each App Service plan is associated with a specific region and includes parameters such as the operating system (Windows or Linux), the number and size of virtual machine instances, and the **pricing tier** (ranging from Free to Premium). The pricing tier affects the features available, performance, and cost of the service. Users can scale their App Service plans up or down based on their application's needs, allowing for flexibility in resource allocation and management of costs.
