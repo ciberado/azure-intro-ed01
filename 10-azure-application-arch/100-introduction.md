@@ -98,8 +98,8 @@ tests** that can be executed by several tools, incluidng [Newman](https://learni
 Get the *Conduit* collection and use it for checking that the application is running fine:
 
 ```bash
-wget https://github.com/gothinkster/realworld/blob/main/api/Conduit.postman_collection.json
-wget https://github.com/gothinkster/realworld/blob/main/api/run-api-tests.sh
+wget https://raw.githubusercontent.com/gothinkster/realworld/main/api/Conduit.postman_collection.json
+wget https://raw.githubusercontent.com/gothinkster/realworld/main/api/run-api-tests.sh
 chmod +x ./run-api-tests.sh
 
 APIURL=http://localhost:5000/ ./run-api-tests.sh
