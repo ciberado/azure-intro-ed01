@@ -101,6 +101,7 @@ echo "Danger!" > /etc/danger.txt # Fails
 
 docker container run --name mydangerousbox -it -v /etc:/myhostdisk busybox
 
+/ # ls /myhostdisk
 / # echo "Danger!" > /myhostdisk/danger.txt
 / # exit
 
@@ -114,14 +115,6 @@ curl localhost:8000
 docker logs webserver
 
 docker logs webserver --follow
-
-
-
-
-
-
-
-
 
 
 
@@ -212,4 +205,59 @@ docker build -t helloworld:publish .
 docker image ls helloworld
 
 docker container run helloworld:publish
+
+git clone https://github.com/Erikvdv/realworldapiminimal
+cd realworldapiminimal
+
+cat .dockerignore
+cat Dockerfile
+
+sed -i s/6.0/8.0/g Dockerfile
+
+docker build -t realworldapi .
+
+docker image ls realworldapi
+
+docker container run --detach --name realworld -p 8080:8080 realworldapi
+docker logs realworld
+
+
+wget https://raw.githubusercontent.com/gothinkster/realworld/main/api/Conduit.postman_collection.json
+wget https://raw.githubusercontent.com/gothinkster/realworld/main/api/run-api-tests.sh
+chmod +x ./run-api-tests.sh
+
+APIURL=http://localhost:8080 ./run-api-tests.sh
+
+docker container rm --force realworld
+
+
+https://learn.microsoft.com/en-us/azure/container-registry/container-registry-concepts
+
+```bash
+export PREFIX=<your own prefix, like $USER or a random id>
+```
+
+az group create \
+  --name $PREFIX-rg \
+  --location westeurope
+
+az acr create \
+  --resource-group $PREFIX-rg \
+  --name ${PREFIX}repo \
+  --sku Basic
+
+az acr list --output table
+
+ACR_SERVER=$(az acr list \
+  --query "[?name=='${PREFIX}repo'].loginServer" \
+  --output tsv
+)
+echo ACR login server is: $ACR_SERVER.
+
+az acr login --name $ACR_SERVER
+
+docker tag realworldapi $ACR_SERVER/realworldapi:1.0.0
+
+docker push $ACR_SERVER/realworldapi:1.0.0
+
 
