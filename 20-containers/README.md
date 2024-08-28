@@ -243,21 +243,99 @@ az group create \
 
 az acr create \
   --resource-group $PREFIX-rg \
-  --name ${PREFIX}repo \
-  --sku Basic
+  --name ${PREFIX}registry \
+  --sku Basic \
+  --admin-enabled false
 
 az acr list --output table
 
 ACR_SERVER=$(az acr list \
-  --query "[?name=='${PREFIX}repo'].loginServer" \
+  --query "[?name=='${PREFIX}registry'].loginServer" \
   --output tsv
 )
 echo ACR login server is: $ACR_SERVER.
 
 az acr login --name $ACR_SERVER
 
-docker tag realworldapi $ACR_SERVER/realworldapi:1.0.0
+docker tag realworldapi $ACR_SERVER/training/realworldapi:1.0.0
 
-docker push $ACR_SERVER/realworldapi:1.0.0
+docker push $ACR_SERVER/training/realworldapi:1.0.0
 
+az acr repository list \
+   --name ${PREFIX}registry \
+   --output table
+
+az acr repository show-tags \
+--name ${PREFIX}registry \
+--repository training/realworldapi \
+--output table
+
+
+az extension add --name containerapp --upgrade --allow-preview true
+
+
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.OperationalInsights
+
+az acr update \
+  --resource-group $PREFIX-rg \
+  --name ${PREFIX}registry \
+  --anonymous-pull-enabled false \
+  --admin-enabled false
+
+az identity create \
+  --resource-group $PREFIX-rg \
+  --name ${PREFIX}appidentity
+
+APP_IDENTITY=$(az identity show \
+  --resource-group $PREFIX-rg \
+  --name ${PREFIX}appidentity \
+  --query principalId \
+  -o tsv)
+echo The security identity of the application is: $APP_IDENTITY.
+
+
+REGISTRY_SCOPE=$(az acr show \
+  --name ${PREFIX}registry \
+  --query id \
+  -o tsv)
+echo The full scope of the regitry is $REGISTRY_SCOPE.
+
+az role assignment create \
+   --assignee $APP_IDENTITY \
+   --role "AcrPull" \
+   --scope $REGISTRY_SCOPE
+
+az role assignment list \
+   --assignee $APP_IDENTITY \
+   --scope $REGISTRY_SCOPE
+
+APP_IDENTITY_SCOPE=$(az identity show \
+  --resource-group $PREFIX-rg \
+  --name ${PREFIX}appidentity \
+  --query id \
+  --output tsv)
+echo The scope of the application identity is $APP_IDENTITY_SCOPE.
+
+
+https://azure.github.io/java-aks-aca-dapr-workshop/modules/09-bonus-assignments/04-managed-identities/2-managed-identities-in-aca.html
+
+Assign the UMI:
+
+
+
+az containerapp env create \
+  --name ${PREFIX}appenv \
+  --resource-group $PREFIX-rg
+
+ az containerapp create -n $ACA_NAME  -g $ACA_RG_NAME --image $IMAGE_NAME --environment $ACA_ENV_NAME --registry-server $ACR_SERVER_NAME --registry-identity $MI_RESOURCE_ID --ingress external --target-port 80 --min-replicas 1
+
+az containerapp create \
+  --name my-container-app \
+  --resource-group $RESOURCE_GROUP \
+  --image $CONTAINER_IMAGE_NAME \
+  --environment $CONTAINERAPPS_ENVIRONMENT \
+  --registry-server $REGISTRY_SERVER \
+  --registry-username $REGISTRY_USERNAME \
+  --registry-password $REGISTRY_PASSWORD
 
