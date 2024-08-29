@@ -241,11 +241,13 @@ az group create \
   --name $PREFIX-rg \
   --location westeurope
 
+
+az provider operation show --namespace Microsoft.ContainerRegistry
+
 az acr create \
   --resource-group $PREFIX-rg \
   --name ${PREFIX}registry \
-  --sku Basic \
-  --admin-enabled false
+  --sku Basic
 
 az acr list --output table
 
@@ -257,9 +259,9 @@ echo ACR login server is: $ACR_SERVER.
 
 az acr login --name $ACR_SERVER
 
-docker tag realworldapi $ACR_SERVER/training/realworldapi:1.0.0
+docker tag realworldapi $ACR_SERVER/training/realworldapi:latest
 
-docker push $ACR_SERVER/training/realworldapi:1.0.0
+docker push $ACR_SERVER/training/realworldapi:latest
 
 az acr repository list \
    --name ${PREFIX}registry \
@@ -273,69 +275,48 @@ az acr repository show-tags \
 
 az extension add --name containerapp --upgrade --allow-preview true
 
-
 az provider register --namespace Microsoft.App
 az provider register --namespace Microsoft.OperationalInsights
 
-az acr update \
-  --resource-group $PREFIX-rg \
+
+az acr show --name ${PREFIX}registry 
+
+ACR_ID=$(az acr show \
   --name ${PREFIX}registry \
-  --anonymous-pull-enabled false \
-  --admin-enabled false
-
-az identity create \
-  --resource-group $PREFIX-rg \
-  --name ${PREFIX}appidentity
-
-APP_IDENTITY=$(az identity show \
-  --resource-group $PREFIX-rg \
-  --name ${PREFIX}appidentity \
-  --query principalId \
-  -o tsv)
-echo The security identity of the application is: $APP_IDENTITY.
-
-
-REGISTRY_SCOPE=$(az acr show \
-  --name ${PREFIX}registry \
-  --query id \
-  -o tsv)
-echo The full scope of the regitry is $REGISTRY_SCOPE.
-
-az role assignment create \
-   --assignee $APP_IDENTITY \
-   --role "AcrPull" \
-   --scope $REGISTRY_SCOPE
-
-az role assignment list \
-   --assignee $APP_IDENTITY \
-   --scope $REGISTRY_SCOPE
-
-APP_IDENTITY_SCOPE=$(az identity show \
-  --resource-group $PREFIX-rg \
-  --name ${PREFIX}appidentity \
   --query id \
   --output tsv)
-echo The scope of the application identity is $APP_IDENTITY_SCOPE.
+
+echo "The full ID (scope) of the ACR is $ACR_ID."
+
+az appservice plan create \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-service-plan \
+  --is-linux
+
+az webapp create \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
+  --acr-use-identity \
+  --plan $PREFIX-service-plan \
+  --container-image-name $ACR_SERVER/training/realworldapi:latest \
+  --assign-identity [system] \
+  --role "AcrPull" \
+  --scope $ACR_ID
+
+az webapp log tail \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app
 
 
-https://azure.github.io/java-aks-aca-dapr-workshop/modules/09-bonus-assignments/04-managed-identities/2-managed-identities-in-aca.html
+```bash
+HOST=$(az webapp show \
+  --resource-group $PREFIX-rg \
+  --name $PREFIX-app \
+  --query "defaultHostName" \
+  --output tsv)
+echo The application is accessible at https://$HOST
 
-Assign the UMI:
+APIURL=https://$HOST ./run-api-tests.sh
 
-
-
-az containerapp env create \
-  --name ${PREFIX}appenv \
-  --resource-group $PREFIX-rg
-
- az containerapp create -n $ACA_NAME  -g $ACA_RG_NAME --image $IMAGE_NAME --environment $ACA_ENV_NAME --registry-server $ACR_SERVER_NAME --registry-identity $MI_RESOURCE_ID --ingress external --target-port 80 --min-replicas 1
-
-az containerapp create \
-  --name my-container-app \
-  --resource-group $RESOURCE_GROUP \
-  --image $CONTAINER_IMAGE_NAME \
-  --environment $CONTAINERAPPS_ENVIRONMENT \
-  --registry-server $REGISTRY_SERVER \
-  --registry-username $REGISTRY_USERNAME \
-  --registry-password $REGISTRY_PASSWORD
+```
 
