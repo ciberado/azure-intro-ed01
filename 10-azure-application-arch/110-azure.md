@@ -1,16 +1,10 @@
 # Azure application architecture
 
-## Azure
-
-![Blueprint of a neightborhood, by Dall-E](images/blueprint-of-a-neightborhood.jpg)
-
-### The [Azure Portal](https://portal.azure.com)
-
-![Azure portal screenshoot](images/azure-portal.png)
+## The [Azure Portal](https://portal.azure.com)
 
 The Azure portal is a **web-based**, unified management console that allows users to create, manage, and monitor a wide range of Azure services and resources. It provides a **graphical user interface** for managing Azure subscriptions, enabling users to perform tasks such as setting up databases, scaling virtual machines, and tracking costs. Additionally, it features customizable dashboards and guided wizards to streamline resource management and enhance user experience.
 
-### The API
+## The API
 
 Install the CLI tool and create an environment variable so you don't collision with other students:
 
@@ -31,10 +25,10 @@ Check what is the current Azure account configuration:
 az account s«how»
 ```
 
-### Physical global infrastructure
+## Physical global infrastructure
 
 
-#### [Regions](https://datacenters.microsoft.com/globe/explore/) 
+### [Regions](https://datacenters.microsoft.com/globe/explore/) 
 
 ![Picture of an AZ](images/datacenter.png)
 
@@ -49,7 +43,7 @@ az account list-locations --output table \
   | grep "(Europe)"
 ```
 
-#### [Availability Zones](https://news.microsoft.com/stories/microsoft-datacenter-tour/)
+### [Availability Zones](https://news.microsoft.com/stories/microsoft-datacenter-tour/)
 
 An availability zone in cloud computing is a distinct location within a region that is **designed to be isolated from failures** in other availability zones. Each availability zone has its own independent power, cooling, and networking infrastructure to ensure high availability and fault tolerance. They are geographically separated to mitigate the risk of local disasters affecting multiple zones simultaneously, yet close enough to provide low-latency network connectivity for data replication and resource distribution. This setup allows cloud providers to offer resilient and reliable services by distributing applications and data across multiple availability zones within a region.
 
@@ -65,15 +59,15 @@ az vm list-skus \
   --output table
 ```
 
-### Logical organization
+## Logical organization
 
-#### Accounts
+### Accounts
 
 An Azure Account is the **first identity** created when an organization
 joins Azure, using an email address as the subject identifier. The
 account is associated to a Tenant.
 
-#### Tenants
+### Tenants
 
 An Azure tenant is a dedicated and trusted instance of Microsoft Entra ID (formerly Azure Active Directory) that represents an organization in the Microsoft cloud and
 it is associated to an account.
@@ -84,13 +78,13 @@ it is associated to an account.
 * The tenant is **responsible for authenticating and authorizing** Azure accounts within the organization. It provides identity and access management services for cloud-based applications. Tenants offer a centralized location for managing user identities, permissions, and access to Azure services across the organization.
 * Organizations can have **multiple tenants if needed**, though typically one tenant is sufficient for most organizations.
 
-#### Management groups
+### Management groups
 
 An Azure management group is a top-level **organizational container** in Azure that helps manage access, policies, and compliance across multiple Azure subscriptions. It allows for **hierarchical organization**, enabling enterprises to apply governance conditions such as policies and role-based access control (RBAC) at a higher level, which then cascade down to all associated subscriptions and resources.
 
 Each Azure Active Directory (Entra ID) tenant has a root management group that encompasses all other management groups and subscriptions, providing a unified structure for efficient and scalable management of Azure resources.
 
-#### Subscriptions
+### Subscriptions
 
 An Azure subscription is a **logical container** that organizes and manages Azure resources, serving as a **billing and administrative boundary** for cloud services.
 
@@ -100,7 +94,7 @@ It is common to define a different subscription for **each application**, or eve
 
 Each subscription is associated with an Azure tenant and can be categorized into various types, such as Pay-as-you-go or Enterprise Agreement, to suit different organizational needs.
 
-#### Resource groups
+### Resource groups
 
 An Azure resource group is a logical container within a subscription that **holds related Azure resources** such as virtual machines, databases, and storage accounts, allowing for easier management and organization. 
 
