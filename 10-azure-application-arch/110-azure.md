@@ -31,10 +31,6 @@ Check what is the current Azure account configuration:
 az account s«how»
 ```
 
-```bash
-export MYPREFIX=<your own MYPREFIX, like $USER or a random id>
-```
-
 ### Physical global infrastructure
 
 
@@ -114,7 +110,13 @@ Multiple resource groups may be used for different environments, but they are mo
 
 The region of the resource group is where its metadata is kept, but resources belonging to it can be deployed in any other region.
 
-Let's create a resource group:
+First, define a unique prefix so your resource names don't collision with any other person:
+
+```bash
+export MYPREFIX=<your own prefix, like $USER or a random id>
+```
+
+And now, let's create a resource group:
 
 ```bash
 az group «create» \
