@@ -14,8 +14,8 @@ Create a storage account that will serve as artifact repository:
 
 ```bash
 az storage a«ccount» create \
-  --name ${PREFIX}repositorysa \
-  --resource-group $PREFIX-rg \
+  --name ${MYPREFIX}repositorysa \
+  --resource-group $MYPREFIX-rg \
   --sku Standard_LRS \
   --encryption-services blob
 ```
@@ -28,7 +28,7 @@ Add a blob container to the previously created storage account:
 
 ```bash
 az storage c«ontainer» create \
-  --account-name ${PREFIX}repositorysa \
+  --account-name ${MYPREFIX}repositorysa \
   --name appversions \
   --auth-mode login
 ```
@@ -42,7 +42,7 @@ it has been created by the same user. That is why uploading a file to it
 
 ```bash
 az storage b«lob» u«pload» \
-  --account-name ${PREFIX}repositorysa \
+  --account-name ${MYPREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -66,7 +66,7 @@ echo Your user identity is $USER_PRINCIPAL_ID.
 az role a«ssignmen»t create \
   --role "Storage Blob Data Contributor" \
   --assignee $USER_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$MYPREFIX-rg/providers/Microsoft.Storage/storageAccounts/${MYPREFIX}repositorysa"
 ```
 
 **Wait a few seconds**, as the role assignment requires broad propagation. Now try to
@@ -74,7 +74,7 @@ upload the file again.
 
 ```bash
 az storage b«lob» u«pload» \
-  --account-name ${PREFIX}repositorysa \
+  --account-name ${MYPREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --file /tmp/app.zip \
@@ -85,7 +85,7 @@ Use the `list` command to ensure that the file has been correctly put in the blo
 
 ```bash
 az storage b«lob» list \
-  --account-name ${PREFIX}repositorysa \
+  --account-name ${MYPREFIX}repositorysa \
   --container-name appversions \
   --output table \
   --auth-mode login

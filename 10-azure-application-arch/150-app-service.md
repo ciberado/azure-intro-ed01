@@ -26,8 +26,8 @@ Let's start by creating a Linux service plan:
 
 ```bash
 az apps«ervice» p«lan» create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-service-plan \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-service-plan \
   --is-l«inux»
 ```
 
@@ -35,9 +35,9 @@ And now setup the application itself with .Net 8 support:
 
 ```bash
 az webapp create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
-  --plan $PREFIX-service-plan \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
+  --plan $MYPREFIX-service-plan \
   --r«untime» "DOTNETCORE|8.0"
 ```
 
@@ -45,8 +45,8 @@ Even if the command returns after a few seconds, several minutes may be required
 
 ```bash
 az webapp log tail \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app
 ```
 
 ### App identity
@@ -57,16 +57,16 @@ By default, apps don't have an identity. But it is straightforward to set up one
 
 ```bash
 az webapp i«dentity» assign \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app
 ```
 
 Once this step is completed, we can get its name:
 
 ```bash
 export APP_PRINCIPAL_ID=$(az webapp i«dentity» show \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --query principalId \
   --output tsv)
 echo The indentity of the app is $APP_PRINCIPAL_ID.
@@ -84,7 +84,7 @@ echo The subscription ID is $SUBSCRIPTION_ID.
 ```
 
 ```bash
-export SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault
+export SCOPE=/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$MYPREFIX-rg/providers/Microsoft.KeyVault/vaults/$MYPREFIX-app-vault
 
 az role assignment create \
   --role "Key Vault Secrets User" \
@@ -101,7 +101,7 @@ Try first getting the unique identifier of the secret `app--db`:
 ```bash
 export SECRET_URI=$(az keyvault secret show \
   --name app--db \
-  --vault-name $PREFIX-app-vault \
+  --vault-name $MYPREFIX-app-vault \
   --query id \
   --output tsv)
 echo The secret URI is $SECRET_URI.
@@ -111,8 +111,8 @@ Add a reference to it in the webapp configuration by setting the env variable:
 
 ```bash
 az webapp c«onfig» appsettings s«et» \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --s«ettings» DB_CONN="@Microsoft.KeyVault(SecretUri=$SECRET_URI)"
 ```
 
@@ -120,8 +120,8 @@ Check that the command worked:
 
 ```bash
 az webapp c«onfig» appsettings list \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --output table
 ```
 
@@ -137,8 +137,8 @@ Deploying from a local file may be useful for testing purposes, or for creating 
 
 ```bash
 az webapp deploy \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --src-path /tmp/app.zip \
   --type 'zip' \
   --track-status
@@ -159,7 +159,7 @@ SAS_URL=$(az storage blob generate-sas \
   --full-uri \
   --permissions r \
   --expiry $EXPIRY \
-  --account-name ${PREFIX}repositorysa \
+  --account-name ${MYPREFIX}repositorysa \
   --container-name appversions \
   --name app.zip \
   --output tsv)
@@ -170,8 +170,8 @@ for retrieving the artifact:
 
 ```bash
 az webapp deploy \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --src-url $SAS_URL \
   --type 'zip' \
   --track-status
@@ -185,8 +185,8 @@ Get the security identity of the application:
 
 ```bash
 export APP_PRINCIPAL_ID=$(az webapp identity show \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --query principalId \
   --output tsv)
 echo The indentity of the app is $APP_PRINCIPAL_ID.
@@ -199,16 +199,16 @@ restricting it to our storage account:
 az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $APP_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.Storage/storageAccounts/${PREFIX}repositorysa"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$MYPREFIX-rg/providers/Microsoft.Storage/storageAccounts/${MYPREFIX}repositorysa"
 ```
 
 Wait a few seconds until the changes are propagated and then order the deployment:
 
 ```bash
 az webapp deploy \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
-  --src-url "https://${PREFIX}repositorysa.blob.core.windows.net/appversions/app.zip" \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
+  --src-url "https://${MYPREFIX}repositorysa.blob.core.windows.net/appversions/app.zip" \
   --type 'zip' \
   --track-status
 ```
@@ -219,16 +219,16 @@ Use `az webapp log tail` to start live log tracing for an Azure web application.
 
 ```bash
 az webapp log tail \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app
 ``
 
 Now feel free to run the test battery against the remote application:
 
 ```bash
 HOST=$(az webapp show \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --query "defaultHostName" \
   --output tsv)
 echo The application is accessible at https://$HOST

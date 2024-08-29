@@ -234,25 +234,25 @@ docker container rm --force realworld
 https://learn.microsoft.com/en-us/azure/container-registry/container-registry-concepts
 
 ```bash
-export PREFIX=<your own prefix, like $USER or a random id>
+export MYPREFIX=<your own MYPREFIX, like $USER or a random id>
 ```
 
 az group create \
-  --name $PREFIX-rg \
+  --name $MYPREFIX-rg \
   --location westeurope
 
 
 az provider operation show --namespace Microsoft.ContainerRegistry
 
 az acr create \
-  --resource-group $PREFIX-rg \
-  --name ${PREFIX}registry \
+  --resource-group $MYPREFIX-rg \
+  --name ${MYPREFIX}registry \
   --sku Basic
 
 az acr list --output table
 
 ACR_SERVER=$(az acr list \
-  --query "[?name=='${PREFIX}registry'].loginServer" \
+  --query "[?name=='${MYPREFIX}registry'].loginServer" \
   --output tsv
 )
 echo ACR login server is: $ACR_SERVER.
@@ -264,11 +264,11 @@ docker tag realworldapi $ACR_SERVER/training/realworldapi:latest
 docker push $ACR_SERVER/training/realworldapi:latest
 
 az acr repository list \
-   --name ${PREFIX}registry \
+   --name ${MYPREFIX}registry \
    --output table
 
 az acr repository show-tags \
---name ${PREFIX}registry \
+--name ${MYPREFIX}registry \
 --repository training/realworldapi \
 --output table
 
@@ -279,39 +279,39 @@ az provider register --namespace Microsoft.App
 az provider register --namespace Microsoft.OperationalInsights
 
 
-az acr show --name ${PREFIX}registry 
+az acr show --name ${MYPREFIX}registry 
 
 ACR_ID=$(az acr show \
-  --name ${PREFIX}registry \
+  --name ${MYPREFIX}registry \
   --query id \
   --output tsv)
 
 echo "The full ID (scope) of the ACR is $ACR_ID."
 
 az appservice plan create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-service-plan \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-service-plan \
   --is-linux
 
 az webapp create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --acr-use-identity \
-  --plan $PREFIX-service-plan \
+  --plan $MYPREFIX-service-plan \
   --container-image-name $ACR_SERVER/training/realworldapi:latest \
   --assign-identity [system] \
   --role "AcrPull" \
   --scope $ACR_ID
 
 az webapp log tail \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app
 
 
 ```bash
 HOST=$(az webapp show \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app \
   --query "defaultHostName" \
   --output tsv)
 echo The application is accessible at https://$HOST

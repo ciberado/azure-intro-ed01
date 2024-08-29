@@ -32,8 +32,8 @@ Now it is possible to create a new vault:
 
 ```bash
 az keyvault create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app-vault \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app-vault \
   --enable-rbac-authorization
 ```
 
@@ -55,7 +55,7 @@ echo The user identifier is $USER_PRINCIPAL_ID.
 az role assignment create \
   --role "Key Vault Administrator" \
   --assignee $USER_PRINCIPAL_ID \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$PREFIX-rg/providers/Microsoft.KeyVault/vaults/$PREFIX-app-vault"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$MYPREFIX-rg/providers/Microsoft.KeyVault/vaults/$MYPREFIX-app-vault"
 ```
 
 ### Creating a new secret
@@ -64,7 +64,7 @@ First we retreive the connection string for the database.
 
 ```bash
 export CONN=$(az postgres flexible-server show-«connection»-string \
-  --server-name $PREFIX-app-db \
+  --server-name $MYPREFIX-app-db \
   --database-name conduit \
   --admin-user dbadmin \
   --admin-password $SQL_PASS \
@@ -77,7 +77,7 @@ Let's store the value of the connection string as a secret (double dashes are us
 
 ```bash
 az keyvault s«ecret» s«et» \
-  --vault-name $PREFIX-app-vault \
+  --vault-name $MYPREFIX-app-vault \
   --name app--db \
   --value "$CONN"
 ```
@@ -86,6 +86,6 @@ And check if it exist:
 
 ```bash
 az keyvault s«ecret» s«how» \
-  --vault-name $PREFIX-app-vault \
+  --vault-name $MYPREFIX-app-vault \
   --name «app--db»
 ```

@@ -26,8 +26,8 @@ Now we can create the database server:
 
 ```bash
 az postgres flexible-server create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app-db \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app-db \
   --database-name conduit \
   --public-access 0.0.0.0 \
   --admin-user dbadmin \
@@ -54,8 +54,8 @@ export MY_IP=$(curl ifconfig.me)
 echo Your current IP is $MY_IP.
 
 az postgres flexible-server f«irewall-rul»e create \
-  --resource-group $PREFIX-rg \
-  --name $PREFIX-app-db \
+  --resource-group $MYPREFIX-rg \
+  --name $MYPREFIX-app-db \
   --start-ip-address $MY_IP \
   --end-ip-address $MY_IP \
   --output table
@@ -81,7 +81,7 @@ So now we can connect to it:
 
 ```bash
 psql \
-  --host=$PREFIX-app-db.postgres.database.azure.com \
+  --host=$MYPREFIX-app-db.postgres.database.azure.com \
   --port=5432 \
   --dbname=conduit \
   --username=dbadmin \

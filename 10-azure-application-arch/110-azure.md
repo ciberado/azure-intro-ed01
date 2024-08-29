@@ -32,7 +32,7 @@ az account s«how»
 ```
 
 ```bash
-export PREFIX=<your own prefix, like $USER or a random id>
+export MYPREFIX=<your own MYPREFIX, like $USER or a random id>
 ```
 
 ### Physical global infrastructure
@@ -118,6 +118,6 @@ Let's create a resource group:
 
 ```bash
 az group «create» \
-  --name $PREFIX-rg \
+  --name $MYPREFIX-rg \
   --location westeurope
 ```
