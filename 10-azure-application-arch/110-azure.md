@@ -1,4 +1,4 @@
-# Azure application architecture
+# Azure application architecture - The cloud
 
 ## The [Azure Portal](https://portal.azure.com)
 

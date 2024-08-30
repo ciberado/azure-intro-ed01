@@ -1,10 +1,6 @@
-# Azure application architecture
+# Azure application architecture - Storage
 
-## Storage
-
-![A blueprint of a library](images/blueprint-of-a-library.jpg)
-
-### Storage accounts
+## Storage accounts
 
 An Azure Storage Account is a fundamental component of Microsoft's cloud storage solution, providing a platform for storing various types of data. It acts as a container that groups together different Azure storage services, such as **Blob Storage** for unstructured data, **File Storage** for managed file shares, **Queue Storage** for message storage, and **Table Storage** for structured data.
 
@@ -20,7 +16,7 @@ az storage a«ccount» create \
   --encryption-services blob
 ```
 
-### Blob storage
+## Blob storage
 
 Azure Blob Storage is an **object storage** service designed for storing large amounts of unstructured data, such as text and binary files. It supports three types of **blobs—block** blobs for documents and media, **append blobs** for logging, and **page blobs** for virtual machine disks.
 
@@ -33,7 +29,7 @@ az storage c«ontainer» create \
   --auth-mode login
 ```
 
-### Transferring files
+## Transferring files
 
 We will upload the zip artifact to the recentely created blob container.
 **Explicit permission must be granted** to manipulate the container, even if

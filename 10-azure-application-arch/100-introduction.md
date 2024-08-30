@@ -1,26 +1,14 @@
-# Azure application architecture
+# Azure application architecture - Introduction
 
-## Introduction
-
-![Blueprint of an artifact and its implementation, by Dall-e](images/blueprint-of-an-artifact-and-its-implementation.jpg)
-
-
-### The [Real World](https://github.com/gothinkster/realworld) project
+## The [Real World](https://github.com/gothinkster/realworld) project
 
 The purpose of GitHub's real-world project initiative is to provide developers with **practical learning experiences** through actual project implementations. These projects aim to bridge the gap between theoretical knowledge and real-world application development by offering complete, functional codebases that demonstrate how various technologies, frameworks, and best practices are used in production-ready applications.
 
 GitHub's RealWorld project **has approximately 100 implementations** available. The most popular technologies used in GitHub's RealWorld project implementations include a diverse range of programming languages and frameworks. Notable mentions are JavaScript frameworks like React, Vue.js, and Angular; Python; Ruby; Go; PHP; Elixir with the Phoenix framework; Java; and C# for .NET technologies. Additionally, mobile development frameworks such as Flutter and Xamarin.Forms are included, along with database technologies like PostgreSQL. This variety reflects the broad spectrum of options available to developers for creating production-ready applications.
 
-::: Notes
+## Requisites
 
-The image tries to make an anology: it is fine to learn by listenting to a talk (blueprint) but it is even better
-if we can put it into practice (implementation).
-
-:::
-
-### Requisites
-
-#### NodeJS support
+### NodeJS support
 
 Node will be require for test execution.
 
@@ -35,7 +23,7 @@ nvm install --lts
 node --version
 ```
 
-#### .Net 8 for Linux
+### .Net 8 for Linux
 
 The backend application consists in a C# implemantion of the API. We will need
 to build and execute it.
@@ -46,9 +34,9 @@ sudo apt-get update \
 dotnet --version
 ```
 
-### Local install and run
+## Local install and run
 
-#### Source code download
+### Source code download
 
 Only the backend application will be used during this training.
 
@@ -57,7 +45,7 @@ git clone https://github.com/Erikvdv/realworldapiminimal
 cd realworldapiminimal
 ```
 
-#### Source code changes
+### Source code changes
 
 Later on, we will inject the database connection string as application configuration.
 We want to check that it has been succesfully added, so we will add a few lines in the
@@ -72,7 +60,7 @@ sed -i '67a\
 ' src/Api/Program.cs
 ```
 
-#### Local building
+### Local building
 
 The application will generate several `.dll` files.
 
@@ -80,7 +68,7 @@ The application will generate several `.dll` files.
 dotnet dotnet publish --configuration Release
 ```
 
-#### Running locally
+### Running locally
 
 The API will (by default) start at port 5000. Check the output of the application to see
 how it prints the provided connection
@@ -90,7 +78,7 @@ cd src/Api/bin/Release/net8.0/publish
 DB_CONN=fake_connection dotnet Api.dll
 ```
 
-#### Testing
+### Testing
 
 A [Postman collection](https://www.postman.com/collection/) is a **set of HTTP-based
 tests** that can be executed by several tools, incluidng [Newman](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman/) (wrapped in a bash script).
@@ -105,7 +93,7 @@ chmod +x ./run-api-tests.sh
 APIURL=http://localhost:5000/ ./run-api-tests.sh
 ```
 
-#### Packaging
+### Packaging
 
 To make it simple, we will start by zipping the whole application:
 

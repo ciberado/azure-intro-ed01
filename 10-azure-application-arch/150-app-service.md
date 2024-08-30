@@ -1,14 +1,10 @@
-# Azure application architecture
-
-## App Service
-
-![A blueprint of a cube](images/blueprint-cube.jpg)
+# Azure application architecture - App Service
 
 Platform as a Service (PaaS) is a cloud computing service model that provides a complete environment for developers to build, run, and manage applications without the complexities of managing the underlying infrastructure, reducing the burden of operating it.
 
 Azure App Service is a PaaS offering from Microsoft for hosting web applications, REST APIs, and mobile back ends. It supports **multiple programming** operating systems, languages and frameworks. App Service provides a range of features such as automatic **scaling**, continuous **deployment**, security, and integration with other Azure services like authentication.
 
-### Service activation
+## Service activation
 
 Web Apps are part of the `Microsoft.App` provider. We will register it, and also
 the `Microsoft.OperationalInsights` to have access to the observability features.
@@ -18,7 +14,7 @@ az provider register --namespace Microsoft.App
 az provider register --namespace Microsoft.OperationalInsights
 ```
 
-### App creation
+## App creation
 
 An **App Service plan**, defines the **set of compute resources and configurations** required to host web applications, REST APIs, and mobile backends on the Azure platform. Each App Service plan is associated with a specific region and includes parameters such as the operating system (Windows or Linux), the number and size of virtual machine instances, and the **pricing tier** (ranging from Free to Premium). The pricing tier affects the features available, performance, and cost of the service. Users can scale their App Service plans up or down based on their application's needs, allowing for flexibility in resource allocation and management of costs.
 
@@ -49,7 +45,7 @@ az webapp log tail \
   --name $MYPREFIX-app
 ```
 
-### App identity
+## App identity
 
 A web app identity in Azure refers to a managed identity that allows Azure applications, such as those hosted on Azure App Service, to **authenticate to other Azure services** without needing to manage credentials explicitly. There are two types of managed identities: *system-assigned identities*, which are tied to a specific application and are deleted when the application is deleted, and *user-assigned identities*, which are standalone resources that can be assigned to multiple applications. Managed identities simplify the process of obtaining tokens for accessing Azure resources like Azure Key Vault or Azure SQL Database, enhancing security by eliminating the need for hard-coded secrets or credentials in the application code.
 
@@ -72,7 +68,7 @@ export APP_PRINCIPAL_ID=$(az webapp i«dentity» show \
 echo The indentity of the app is $APP_PRINCIPAL_ID.
 ```
 
-### Key Vault access authorization
+## Key Vault access authorization
 
 A role is required to access Azure Key Vault from an App Service due to Azure's role-based access control (RBAC) system, which governs permissions for accessing resources. When an App Service needs to retrieve secrets, keys, or certificates from a Key Vault, it must have an appropriate role assigned to its managed identity. This ensures that only authorized applications can access sensitive information, enhancing security and compliance.
 
@@ -92,7 +88,7 @@ az role assignment create \
   --scope $SCOPE
 ```
 
-### Key Vault integration 
+## Key Vault integration 
 
 A Key Vault reference in Azure App Configuration allows applications to securely reference secrets stored in Azure Key Vault **without exposing the actual secret** values. Instead of storing sensitive information directly within the application configuration, developers can use a **reference notation** that points to the secret's URI in Key Vault. The application must authenticate separately to both Azure App Configuration and Azure Key Vault to retrieve the referenced secrets, ensuring that sensitive data remains protected and access is controlled through Azure's role-based access control (RBAC) system.
 
@@ -125,13 +121,13 @@ az webapp c«onfig» appsettings list \
   --output table
 ```
 
-### Application deployment
+## Application deployment
 
-#### From Azure Artifact Registry
+### From Azure Artifact Registry
 
 Azure Artifact Registry is a **private repository** for storing and managing **software packages and container images** used in cloud applications. It supports various artifact types like Docker images, Maven packages, npm modules, and Debian packages. Artifacts are organized into repositories and namespaces for better management. **Developers can access the artifacts using standard tools** like Docker, Maven, or npm, with the registry URL, repository path, and tag or digest. Azure Artifact Registry integrates with other Azure services like AKS for deploying container workloads.
 
-#### From local computer
+### From local computer
 
 Deploying from a local file may be useful for testing purposes, or for creating build-and-deploy automated pipelines.
 
@@ -144,7 +140,7 @@ az webapp deploy \
   --track-status
 ```
 
-#### From a Storage Account using SAS
+### From a Storage Account using SAS
 
 Shared Access Signature (SAS) authorization in Azure Storage allows you to grant **limited access to specific resources** without sharing your account keys. It generates a token that specifies which resources can be accessed, the permissions granted (like read or write), and the duration for which the access is valid. There are two types of SAS: Service SAS, which is specific to a single storage service (like Blob or Queue), and Account SAS, which can provide access across multiple services. The client **includes the SAS token in requests** to Azure Storage, which verifies the token and checks if the requested operation is allowed based on the defined permissions. This method enables secure, temporary access to storage resources.
 
@@ -177,7 +173,7 @@ az webapp deploy \
   --track-status
 ```
 
-#### From a Storage Account using RBAC
+### From a Storage Account using RBAC
 
 RBAC provides **fine-grained access** management, allowing administrators to assign specific roles to users or groups, which simplifies permission management and reduces the risk of over-permissioning. In contrast, SAS tokens can create security vulnerabilities if not managed carefully, as they grant access without the same level of oversight and can be difficult to revoke. Additionally, RBAC **integrates with Azure’s identity management**, enabling better tracking and auditing of user activities, which is crucial for compliance and security.
 
@@ -213,7 +209,7 @@ az webapp deploy \
   --track-status
 ```
 
-### Testing
+## Testing
 
 Use `az webapp log tail` to start live log tracing for an Azure web application. If everything is ok, the application should start and show the connection string as part of the output. Interrupt it at any time using `ctrl+c`.
 

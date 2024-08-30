@@ -1,17 +1,13 @@
-# Azure application architecture
-
-## Databases
-
-![Blueprint of an archive](images/blueprint-archive.jpg)
+# Azure application architecture - Databases
 
 Azure provides several managed database options, including Azure SQL Database for SQL Server-based applications, Azure SQL Managed Instance for existing SQL Server workloads, and Azure Database for PostgreSQL, MySQL, and MariaDB for open-source databases. Azure Cosmos DB supports globally distributed, multi-model databases, while Azure Managed Instance for Apache Cassandra offers a managed service for Cassandra. For analytics, Azure Synapse Analytics serves as a data warehousing solution, and Azure Cache for Redis provides in-memory caching. These services offer varying levels of control, scalability, and compatibility to meet different application requirements.
 
 
-### Azure Database for PostgreSQL Flexible Server
+## Azure Database for PostgreSQL Flexible Server
 
 Offers more control and flexibility compared to the Single Server option. Flexible Server allows for greater customization of database configurations and supports **high availability** within a single availability zone or across multiple zones. It also provides cost optimization features, such as the ability to **stop and start the server**, and supports **burstable** compute tiers for workloads that don't require continuous compute capacity. Additionally, Flexible Server includes built-in connection **pooling with PgBouncer**, supports a wider range of PostgreSQL versions, and allows for co-location with application tiers to reduce latency. In contrast, Single Server has more limited configuration options and is on a retirement path, with recommendations to migrate to Flexible Server for enhanced features and capabilities
 
-### Server creation
+## Server creation
 
 This script will create the server with **public connectivity**, which is obviously a bad choice for production workloads but will make access to the database more straightforward during lab time.
 
@@ -43,7 +39,7 @@ details about the instance:
 az postgres flexible-server l«ist» --output table  
 ```
 
-### Firewall configuration
+## Firewall configuration
 
 By default, the database servers have null connectivity thanks to their database and it is
 necessary to open it to accept incoming connections. In our case
@@ -61,7 +57,7 @@ az postgres flexible-server f«irewall-rul»e create \
   --output table
 ```
 
-### Checking database
+## Checking database
 
 If required, use `cat sql_pass.txt` to know which password was used for creating the server.
 If you can't connect to the database, please check if there is any VPN/Firewall software running in your

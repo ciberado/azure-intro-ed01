@@ -1,15 +1,11 @@
-# Azure application architecture
+# Azure application architecture - App configuration
 
-## Application configuration
-
-![A blueprint of a vault](images/blueprint-of-a-vault.jpg)
-
-### App Configuration service
+## App Configuration service
 
 Azure App Configuration enables the **centralization of application settings** and **feature flags**. It is built on a simple **key-value** pair model. This service supports **hierarchical namespaces**, labeling, and extensive querying. Also integrates with other Azure services, enabling **dynamic configuration** updates without redeploying applications. While it provides encryption for data in transit and at rest, it is not intended for storing sensitive information like secrets.
 
 
-### Azure Key Vault
+## Azure Key Vault
 
 Azure Key Vault is a cloud service designed to securely store and **manage sensitive information** such as cryptographic keys, secrets, and certificates. Key Vault supports **secrets management**, allowing users to securely store tokens, passwords, API keys, and other sensitive data. It also facilitates key management by enabling the creation and control of encryption keys used to protect data. Additionally, Key Vault manages digital certificates, helping with authentication and encryption processes.
 
@@ -37,7 +33,7 @@ az keyvault create \
   --enable-rbac-authorization
 ```
 
-### Secret management authorization
+## Secret management authorization
 
 When *RBAC authorization* is enable, the user must have the [proper role](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli#azure-built-in-roles-for-key-vault-data-plane-operations) (authorization) assigned before creating or reading secrets.
 
@@ -58,7 +54,7 @@ az role assignment create \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$MYPREFIX-rg/providers/Microsoft.KeyVault/vaults/$MYPREFIX-app-vault"
 ```
 
-### Creating a new secret
+## Creating a new secret
 
 First we retreive the connection string for the database.
 
