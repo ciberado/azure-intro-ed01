@@ -36,8 +36,6 @@ az account s███
 
 ### [Regions](https://datacenters.microsoft.com/globe/explore/) 
 
-![Picture of an AZ](images/datacenter.png)
-
 An Azure region is a geographic area that contains a **set of data centers** connected through a dedicated low-latency network. These regions allow organizations to deploy their applications and services **closer to their users**, optimizing performance and ensuring **compliance with data residency** requirements. Cost varies between different regions, as the list of available services does.
 
 Each region can consist of one or more data centers, and Azure currently operates over **60 regions worldwide**.
