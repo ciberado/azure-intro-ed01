@@ -115,7 +115,7 @@ EOF
 ```bash
 cat << 'EOF' > output.tf
 output "current_subscription_display_name" {
-  value = data.azurerm_subscription.c«urrent».display_name
+  value = data.azurerm_subscription.c██████.display_name
 }
 EOF
 ```
@@ -125,13 +125,13 @@ EOF
 Use the following command to check if the source code of the project follows the strict Terraform convention:
 
 ```bash
-terraform f«mt» -check
+terraform f██ -check
 ```
 
 In case the linting test is not passed, the format can be corrected using the same command without any argument:
 
 ```bash
-terraform f«mt»
+terraform f██
 ```
 
 ### Backend initialization
