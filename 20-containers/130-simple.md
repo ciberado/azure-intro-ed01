@@ -96,13 +96,16 @@ Our first approach will copy the source code to the container and build it from 
 cat << EOF > Dockerfile
 F███ mcr.microsoft.com/dotnet/sdk:8.0
 
-████DIR /app     # Sets the current directory to /app
+# Sets the current directory to /app
+████DIR /app
 
-COPY . .         # Copy the source code to the container, from the context
+# Copy the source code to the container, from the context
+COPY . .
 
 RUN dotnet build # Build the application
 
-ENTRY█████ ["dotnet", "run"] # Run the application on container creation
+# Run the application on container creation
+ENTRY█████ ["dotnet", "run"]
 EOF
 ```
 
