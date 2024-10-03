@@ -90,7 +90,7 @@ For checking the application from our local machine, we can map a pod port  usin
 Let's map the port `8000` of our machine to the port `80` of the Pod, managed by the Nginx application.
 
 ```bash
-kubectl port-forward conduit ████:██ &
+kubectl port-forward conduit ████:██ --address='0.0.0.0' &
 echo Open http://$MY_IP:8000 to see the application in the cluster!
 ```
 
