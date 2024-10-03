@@ -3,7 +3,7 @@
 Before we start creating our Kubernetes cluster in Azure, we will set a prefix that we'll use to name all the resources we'll create. This way, we'll avoid naming conflicts with other resources that might already exist in your Azure account. 
 
 ```bash
-export CLUSTER_PREFIX=<the cluster prefix>
+export CLUSTER_PREFIX=training
 ```
 
 ## Infrastructure creation
