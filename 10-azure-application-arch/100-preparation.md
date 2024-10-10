@@ -23,15 +23,21 @@ nvm install --lts
 node --version
 ```
 
-### .Net 8 for Linux
+### .Net 8 for Linux & Windows
 
 The backend application consists in a C# implemantion of the API. We will need
 to build and execute it.
 
+Linux:
 ```bash
 sudo apt-get update \
   && sudo apt-get install -y dotnet-sdk-8.0
 dotnet --version
+```
+
+Windows:
+```bash
+choco install dotnet-8.0-sdk
 ```
 
 ### Source code download
